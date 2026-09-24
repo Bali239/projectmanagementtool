@@ -90,30 +90,14 @@ export default function Navbar({ onToggleSidebar, sidebarOpen, onCreateTask }: D
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:ml-0" ref={menuRef}>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => toggleMenu("create")}
-            aria-expanded={openMenu === "create"}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-          >
-            <Plus className="size-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Create</span>
-          </button>
-          {openMenu === "create" && (
-            <div className="absolute right-0 top-11 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10">
-              <p className="px-2.5 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Create new</p>
-              <button type="button" onClick={() => { setOpenMenu(null); onCreateTask() }} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-                <span className="flex size-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600"><Check className="size-4" /></span>
-                Task <span className="ml-auto text-xs text-slate-400">T</span>
-              </button>
-              <button type="button" onClick={() => setOpenMenu(null)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-                <span className="flex size-7 items-center justify-center rounded-md bg-amber-50 text-amber-600"><LayoutDashboard className="size-4" /></span>
-                Project
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={onCreateTask}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <Plus className="size-4" strokeWidth={2.5} />
+          <span className="hidden sm:inline">Create</span>
+        </button>
 
         <button type="button" aria-label="Notifications" className="hidden size-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:flex">
           <Bell className="size-[18px]" />
