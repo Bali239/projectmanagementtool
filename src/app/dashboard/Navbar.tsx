@@ -3,6 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
+import { useAppDispatch } from "@/store/hooks"
+import { setTaskSearchQuery } from "@/store/tasksSlice"
 import {
   Bell,
   Check,
@@ -28,9 +30,15 @@ type DashNavProps = {
 type MenuName = "create" | "settings" | "account" | null
 
 export default function Navbar({ onToggleSidebar, sidebarOpen, onCreateTask }: DashNavProps) {
+  const dispatch = useAppDispatch()
   const [openMenu, setOpenMenu] = useState<MenuName>(null)
   const [search, setSearch] = useState("")
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 300)
+    return () => window.clearTimeout(timeout)
+  }, [dispatch, search])
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -72,7 +80,7 @@ export default function Navbar({ onToggleSidebar, sidebarOpen, onCreateTask }: D
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search"
+          placeholder="Search tasks"
           aria-label="Search workspace"
           className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-14 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
         />

@@ -1,71 +1,45 @@
 "use client"
 
 import { Editor } from "@tinymce/tinymce-react"
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useCallback, useEffect, type ReactNode } from "react"
+import { Controller, useForm } from "react-hook-form"
 import { CalendarDays, Check, ChevronDown, CircleDot, X } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { closeCreateTask, taskAdded, tasksHydrated, taskStatuses, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
+import { storedTaskSchema, taskFormSchema, type TaskFormValues } from "@/store/taskSchema"
+import { SIDEBAR_PREFERENCE_KEY, sidebarStateHydrated } from "@/store/uiSlice"
 
 export const TASK_STORAGE_KEY = "jiratodo-tasks"
 
-export type TaskStatus = "todo" | "in-progress" | "in-review" | "completed" | "due-date"
-
-export type BoardTask = {
-  id: string
-  title: string
-  description: string
-  status: TaskStatus
-  dueDate: string
-  createdAt: string
-}
-
-type NewTask = Omit<BoardTask, "id" | "createdAt">
-
-type TaskWorkspaceValue = {
-  tasks: BoardTask[]
-  hydrated: boolean
-  openCreateTask: (status?: TaskStatus) => void
-  addTask: (task: NewTask) => void
-  moveTask: (taskId: string, status: TaskStatus, targetTaskId?: string) => void
-}
-
-const TaskWorkspaceContext = createContext<TaskWorkspaceValue | null>(null)
-
-export function useTaskWorkspace() {
-  const value = useContext(TaskWorkspaceContext)
-  if (!value) throw new Error("useTaskWorkspace must be used inside TaskWorkspaceProvider")
-  return value
-}
-
-const statusOptions: { id: TaskStatus; label: string }[] = [
-  { id: "todo", label: "To do" },
-  { id: "in-progress", label: "In progress" },
-  { id: "in-review", label: "In review" },
-  { id: "completed", label: "Completed" },
-  { id: "due-date", label: "Due date" },
-]
-
-function TaskDialog({ onClose, onCreate, initialStatus }: { onClose: () => void; onCreate: (task: NewTask) => void; initialStatus: TaskStatus }) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [status, setStatus] = useState<TaskStatus>(initialStatus)
-  const [dueDate, setDueDate] = useState("")
+function TaskDialog({ initialStatus }: { initialStatus: TaskStatus }) {
+  const dispatch = useAppDispatch()
+  const close = useCallback(() => dispatch(closeCreateTask()), [dispatch])
+  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: { title: "", description: "", status: initialStatus, dueDate: "" },
+  })
 
   useEffect(() => {
     function onEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose()
+      if (event.key === "Escape") close()
     }
     document.addEventListener("keydown", onEscape)
     return () => document.removeEventListener("keydown", onEscape)
-  }, [onClose])
+  }, [close])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!title.trim()) return
-    onCreate({ title: title.trim(), description, status, dueDate })
-    onClose()
+  function submitTask(values: TaskFormValues) {
+    const newTask: BoardTask = {
+      ...values,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }
+    dispatch(taskAdded(newTask))
+    close()
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-[2px] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-[2px] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}>
       <section role="dialog" aria-modal="true" aria-labelledby="create-task-title" className="flex max-h-[min(850px,94vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/20">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
           <div className="flex items-center gap-3">
@@ -75,42 +49,51 @@ function TaskDialog({ onClose, onCreate, initialStatus }: { onClose: () => void;
               <h2 id="create-task-title" className="mt-0.5 text-base font-semibold text-slate-900">Create task</h2>
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close dialog" className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="size-4" /></button>
+          <button type="button" onClick={close} aria-label="Close dialog" className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="size-4" /></button>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit(submitTask)} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="space-y-5 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-800">Task name <span className="text-rose-500">*</span></span>
-              <input autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="What needs to get done?" className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100" />
+              <input autoFocus aria-invalid={!!errors.title} {...register("title")} placeholder="What needs to get done?" className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100 aria-[invalid=true]:border-rose-400" />
+              {errors.title && <span role="alert" className="mt-1 block text-xs text-rose-600">{errors.title.message}</span>}
             </label>
 
             <div>
               <span className="mb-2 block text-sm font-semibold text-slate-800">Description</span>
               <div className="overflow-hidden rounded-lg border border-slate-200 [&_.tox-tinymce]:!border-0 [&_.tox-tinymce]:!rounded-lg [&_.tox-editor-header]:!shadow-none">
-                <Editor
-                  tinymceScriptSrc="/tinymce/tinymce.min.js"
-                  licenseKey="gpl"
-                  value={description}
-                  onEditorChange={setDescription}
-                  init={{
-                    base_url: "/tinymce",
-                    suffix: ".min",
-                    height: 210,
-                    menubar: false,
-                    statusbar: false,
-                    plugins: "lists link",
-                    toolbar: "undo redo | blocks | bold italic | bullist numlist | link",
-                    toolbar_mode: "sliding",
-                    promotion: false,
-                    branding: false,
-                    content_css: "/tinymce/skins/content/default/content.min.css",
-                    skin_url: "/tinymce/skins/ui/oxide",
-                    placeholder: "Add context, acceptance criteria, or notes...",
-                  }}
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Editor
+                      tinymceScriptSrc="/tinymce/tinymce.min.js"
+                      licenseKey="gpl"
+                      value={field.value}
+                      onEditorChange={field.onChange}
+                      onBlur={field.onBlur}
+                      init={{
+                        base_url: "/tinymce",
+                        suffix: ".min",
+                        height: 210,
+                        menubar: false,
+                        statusbar: false,
+                        plugins: "lists link",
+                        toolbar: "undo redo | blocks | bold italic | bullist numlist | link",
+                        toolbar_mode: "sliding",
+                        promotion: false,
+                        branding: false,
+                        content_css: "/tinymce/skins/content/default/content.min.css",
+                        skin_url: "/tinymce/skins/ui/oxide",
+                        placeholder: "Add context, acceptance criteria, or notes...",
+                      }}
+                    />
+                  )}
                 />
               </div>
               <p className="mt-1.5 text-xs text-slate-400">Add details to help your team understand the task.</p>
+              {errors.description && <p role="alert" className="mt-1 text-xs text-rose-600">{errors.description.message}</p>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -118,18 +101,20 @@ function TaskDialog({ onClose, onCreate, initialStatus }: { onClose: () => void;
                 <span className="mb-2 block text-sm font-semibold text-slate-800">Status</span>
                 <span className="relative block">
                   <CircleDot className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-indigo-500" />
-                  <select value={status} onChange={(event) => setStatus(event.target.value as TaskStatus)} className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100">
-                    {statusOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                  <select {...register("status")} className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100">
+                    {taskStatuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                 </span>
+                {errors.status && <span role="alert" className="mt-1 block text-xs text-rose-600">{errors.status.message}</span>}
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-800">Due date</span>
                 <span className="relative block">
                   <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                  <input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100" />
+                  <input type="date" {...register("dueDate")} className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100" />
                 </span>
+                {errors.dueDate && <span role="alert" className="mt-1 block text-xs text-rose-600">{errors.dueDate.message}</span>}
               </label>
             </div>
           </div>
@@ -137,8 +122,8 @@ function TaskDialog({ onClose, onCreate, initialStatus }: { onClose: () => void;
           <footer className="flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-5 py-3.5 sm:px-7">
             <p className="hidden text-xs text-slate-400 sm:block">You can change status at any time.</p>
             <div className="ml-auto flex items-center gap-2">
-              <button type="button" onClick={onClose} className="h-9 rounded-lg px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200/70">Cancel</button>
-              <button type="submit" disabled={!title.trim()} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"><PlusIcon /> Create task</button>
+              <button type="button" onClick={close} className="h-9 rounded-lg px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200/70">Cancel</button>
+              <button type="submit" disabled={isSubmitting} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"><span aria-hidden="true" className="text-lg font-normal leading-none">+</span> Create task</button>
             </div>
           </footer>
         </form>
@@ -147,61 +132,59 @@ function TaskDialog({ onClose, onCreate, initialStatus }: { onClose: () => void;
   )
 }
 
-function PlusIcon() {
-  return <span aria-hidden="true" className="text-lg font-normal leading-none">+</span>
+const statusLabels: Record<TaskStatus, string> = {
+  todo: "To do",
+  "in-progress": "In progress",
+  "in-review": "In review",
+  completed: "Completed",
+  "due-date": "Due date",
 }
 
 export function TaskWorkspaceProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<BoardTask[]>([])
-  const [hydrated, setHydrated] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [createStatus, setCreateStatus] = useState<TaskStatus>("todo")
+  const dispatch = useAppDispatch()
+  const { items: tasks, hydrated, createDialogOpen, createStatus } = useAppSelector((state) => state.tasks)
+  const { sidebarOpen, hydrated: sidebarHydrated } = useAppSelector((state) => state.ui)
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(TASK_STORAGE_KEY)
-      if (stored) {
-        const parsed: unknown = JSON.parse(stored)
-        if (Array.isArray(parsed)) setTasks(parsed as BoardTask[])
+      if (!stored) {
+        dispatch(tasksHydrated([]))
+        return
       }
+      const parsed: unknown = JSON.parse(stored)
+      const result = Array.isArray(parsed) ? storedTaskSchema.array().safeParse(parsed) : null
+      dispatch(tasksHydrated(result?.success ? result.data : []))
     } catch {
-      window.localStorage.removeItem(TASK_STORAGE_KEY)
-    } finally {
-      setHydrated(true)
+      dispatch(tasksHydrated([]))
     }
-  }, [])
+  }, [dispatch])
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY)
+      dispatch(sidebarStateHydrated(stored === null ? true : stored === "true"))
+    } catch {
+      dispatch(sidebarStateHydrated(true))
+    }
+  }, [dispatch])
 
   useEffect(() => {
     if (hydrated) window.localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(tasks))
   }, [hydrated, tasks])
 
-  const addTask = useCallback((task: NewTask) => {
-    setTasks((current) => [{ ...task, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...current])
-  }, [])
-
-  const moveTask = useCallback((taskId: string, status: TaskStatus, targetTaskId?: string) => {
-    setTasks((current) => {
-      const moving = current.find((task) => task.id === taskId)
-      if (!moving) return current
-      const remaining = current.filter((task) => task.id !== taskId)
-      const targetIndex = targetTaskId ? remaining.findIndex((task) => task.id === targetTaskId) : -1
-      const lastInColumn = remaining.reduce((last, task, index) => task.status === status ? index : last, -1)
-      const insertAt = targetIndex >= 0 ? targetIndex : lastInColumn + 1
-      remaining.splice(insertAt, 0, { ...moving, status })
-      return remaining
-    })
-  }, [])
-
-  const openCreateTask = useCallback((status: TaskStatus = "todo") => {
-    setCreateStatus(status)
-    setDialogOpen(true)
-  }, [])
-  const value = useMemo(() => ({ tasks, hydrated, openCreateTask, addTask, moveTask }), [tasks, hydrated, openCreateTask, addTask, moveTask])
+  useEffect(() => {
+    if (sidebarHydrated) {
+      const value = String(sidebarOpen)
+      window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, value)
+      document.cookie = `${SIDEBAR_PREFERENCE_KEY}=${value}; Path=/; Max-Age=31536000; SameSite=Lax`
+    }
+  }, [sidebarHydrated, sidebarOpen])
 
   return (
-    <TaskWorkspaceContext.Provider value={value}>
+    <>
       {children}
-      {dialogOpen && <TaskDialog initialStatus={createStatus} onClose={() => setDialogOpen(false)} onCreate={addTask} />}
-    </TaskWorkspaceContext.Provider>
+      {createDialogOpen && <TaskDialog key={createStatus} initialStatus={createStatus} />}
+    </>
   )
 }

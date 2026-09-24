@@ -4,7 +4,8 @@ import { DragDropProvider } from "@dnd-kit/react"
 import { useSortable } from "@dnd-kit/react/sortable"
 import { useDroppable } from "@dnd-kit/react"
 import { CalendarDays, Check, Circle, Clock3, Eye, Plus, Sparkles } from "lucide-react"
-import { useTaskWorkspace, type BoardTask, type TaskStatus } from "./TaskWorkspace"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { openCreateTask, taskMoved, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
 
 const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: string }[] = [
   { id: "todo", label: "To do", icon: Circle, tone: "text-slate-400" },
@@ -43,13 +44,14 @@ function TaskCard({ task, index }: { task: BoardTask; index: number }) {
   )
 }
 
-function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd }: {
+function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd, searching }: {
   status: TaskStatus
   label: string
   icon: typeof Circle
   tone: string
   tasks: BoardTask[]
   onAdd: () => void
+  searching: boolean
 }) {
   const { ref, isDropTarget } = useDroppable({ id: `column-${status}`, data: { status } })
 
@@ -68,7 +70,7 @@ function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd }: {
         {tasks.map((task, index) => <TaskCard key={task.id} task={task} index={index} />)}
         {tasks.length === 0 && (
           <div className={`flex min-h-24 flex-1 items-center justify-center rounded-lg border border-dashed text-xs transition-colors ${isDropTarget ? "border-indigo-300 text-indigo-500" : "border-slate-300/80 text-slate-400"}`}>
-            Drop a task here
+            {searching ? "No matching tasks" : "Drop a task here"}
           </div>
         )}
       </div>
@@ -77,7 +79,15 @@ function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd }: {
 }
 
 export default function DashboardPage() {
-  const { tasks, hydrated, openCreateTask, moveTask } = useTaskWorkspace()
+  const dispatch = useAppDispatch()
+  const { items: tasks, hydrated, searchQuery } = useAppSelector((state) => state.tasks)
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase()
+  const filteredTasks = normalizedQuery
+    ? tasks.filter((task) => {
+        const description = task.description.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")
+        return `${task.title} ${description}`.toLocaleLowerCase().includes(normalizedQuery)
+      })
+    : tasks
 
   return (
     <div className="mx-auto max-w-[1800px]">
@@ -87,7 +97,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Project board</h1>
           <p className="mt-1 text-sm text-slate-500">Plan, track, and move your work forward.</p>
         </div>
-        <button type="button" onClick={() => openCreateTask()} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"><Plus className="size-4" /> Add task</button>
+        <button type="button" onClick={() => dispatch(openCreateTask("todo"))} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"><Plus className="size-4" /> Add task</button>
       </div>
 
       <div className="overflow-x-auto pb-5">
@@ -102,7 +112,7 @@ export default function DashboardPage() {
             const status = event.operation.target?.data.status as TaskStatus | undefined
             const targetTaskId = event.operation.target?.data.taskId
             if (typeof taskId === "string" && status && columns.some((column) => column.id === status)) {
-              moveTask(taskId, status, typeof targetTaskId === "string" ? targetTaskId : undefined)
+              dispatch(taskMoved({ taskId, status, targetTaskId: typeof targetTaskId === "string" ? targetTaskId : undefined }))
             }
           }}>
             <div className="flex min-w-max gap-4">
@@ -113,8 +123,9 @@ export default function DashboardPage() {
                   label={column.label}
                   icon={column.icon}
                   tone={column.tone}
-                  tasks={tasks.filter((task) => task.status === column.id)}
-                  onAdd={() => openCreateTask(column.id)}
+                  tasks={filteredTasks.filter((task) => task.status === column.id)}
+                  onAdd={() => dispatch(openCreateTask(column.id))}
+                  searching={!!normalizedQuery}
                 />
               ))}
             </div>
