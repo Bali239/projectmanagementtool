@@ -19,6 +19,9 @@
 /.next/
 /out/
 
+# Local TinyMCE runtime assets copied from node_modules
+/public/tinymce/
+
 # production
 /build
 

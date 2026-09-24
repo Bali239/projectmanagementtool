@@ -12,7 +12,7 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="flex min-h-[calc(100vh-68px)] w-64 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 text-slate-700">
+    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 text-slate-700">
       <Link href="/dashboard" className="mb-8 flex items-center gap-3 rounded-xl px-2 py-1.5 outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-indigo-500">
         
         <Image alt="logo" src="/icon.svg" width={32} height={32} priority />
