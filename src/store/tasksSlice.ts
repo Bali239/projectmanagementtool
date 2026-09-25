@@ -17,6 +17,8 @@ type TasksState = {
   hydrated: boolean
   createDialogOpen: boolean
   createStatus: TaskStatus
+  activeTaskId: string | null
+  taskView: "details" | "edit" | null
   searchQuery: string
 }
 
@@ -25,6 +27,8 @@ const initialState: TasksState = {
   hydrated: false,
   createDialogOpen: false,
   createStatus: "todo",
+  activeTaskId: null,
+  taskView: null,
   searchQuery: "",
 }
 
@@ -38,6 +42,10 @@ const tasksSlice = createSlice({
     },
     taskAdded(state, action: PayloadAction<BoardTask>) {
       state.items.unshift(action.payload)
+    },
+    taskUpdated(state, action: PayloadAction<BoardTask>) {
+      const index = state.items.findIndex((task) => task.id === action.payload.id)
+      if (index >= 0) state.items[index] = action.payload
     },
     taskMoved(state, action: PayloadAction<{ taskId: string; status: TaskStatus; targetTaskId?: string }>) {
       const { taskId, status, targetTaskId } = action.payload
@@ -57,11 +65,37 @@ const tasksSlice = createSlice({
     closeCreateTask(state) {
       state.createDialogOpen = false
     },
+    openTaskDetails(state, action: PayloadAction<string>) {
+      state.activeTaskId = action.payload
+      state.taskView = "details"
+    },
+    editTaskDetails(state) {
+      if (state.activeTaskId) state.taskView = "edit"
+    },
+    showTaskDetails(state) {
+      if (state.activeTaskId) state.taskView = "details"
+    },
+    closeTaskDetails(state) {
+      state.activeTaskId = null
+      state.taskView = null
+    },
     setTaskSearchQuery(state, action: PayloadAction<string>) {
       state.searchQuery = action.payload
     },
   },
 })
 
-export const { tasksHydrated, taskAdded, taskMoved, openCreateTask, closeCreateTask, setTaskSearchQuery } = tasksSlice.actions
+export const {
+  tasksHydrated,
+  taskAdded,
+  taskUpdated,
+  taskMoved,
+  openCreateTask,
+  closeCreateTask,
+  openTaskDetails,
+  editTaskDetails,
+  showTaskDetails,
+  closeTaskDetails,
+  setTaskSearchQuery,
+} = tasksSlice.actions
 export default tasksSlice.reducer

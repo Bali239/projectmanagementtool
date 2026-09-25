@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/react/sortable"
 import { useDroppable } from "@dnd-kit/react"
 import { CalendarDays, Check, Circle, Clock3, Eye, Plus, Sparkles } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { openCreateTask, taskMoved, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
+import { openCreateTask, openTaskDetails, taskMoved, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
 
 const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: string }[] = [
   { id: "todo", label: "To do", icon: Circle, tone: "text-slate-400" },
@@ -16,6 +16,7 @@ const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: strin
 ]
 
 function TaskCard({ task, index }: { task: BoardTask; index: number }) {
+  const dispatch = useAppDispatch()
   const { ref, isDragging } = useSortable({
     id: task.id,
     index,
@@ -26,6 +27,13 @@ function TaskCard({ task, index }: { task: BoardTask; index: number }) {
   return (
     <article
       ref={ref}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open details for ${task.title}`}
+      onClick={() => dispatch(openTaskDetails(task.id))}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") dispatch(openTaskDetails(task.id))
+      }}
       className={`cursor-grab rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-slate-300 hover:shadow-md active:cursor-grabbing ${isDragging ? "opacity-45 ring-2 ring-indigo-300" : ""}`}
     >
       <div className="mb-2.5 flex items-start justify-between gap-2">
