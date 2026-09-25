@@ -5,6 +5,7 @@ import { store } from "@/store/store"
 import React from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { AuthProvider } from "@/context/AuthContext";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -17,15 +18,15 @@ const queryClient = new QueryClient({
     },
 })
 
-export function ReduxProdvidor({ children }: { children: React.ReactNode }) {
+export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
-        <>
-            <QueryClientProvider client={queryClient}>
-                <Provider store={store}>
-                    {children}
-                </Provider>
-                <ReactQueryDevtools initialIsOpen={false}/>
-            </QueryClientProvider>
-        </>
+        <QueryClientProvider client={queryClient}>
+            <Provider store={store}>
+                <AuthProvider>{children}</AuthProvider>
+            </Provider>
+            <ReactQueryDevtools initialIsOpen={false}/>
+        </QueryClientProvider>
     )
 }
+
+export const ReduxProdvidor = AppProviders

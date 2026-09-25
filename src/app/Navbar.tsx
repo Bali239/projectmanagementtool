@@ -1,16 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useAuth } from "@/context/AuthContext"
 
 export default function Navbar() {
-  const [user, setUser] = useState<string | null>(null)
-
-  useEffect(() => {
-    setUser(localStorage.getItem("user"))
-  }, [])
+  const { user, loading } = useAuth()
 
   return (
       <header className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 overflow-hidden rounded-full border border-white/15 bg-slate-950/85 shadow-lg shadow-black/30 backdrop-blur-xl backdrop-saturate-150">
@@ -28,9 +24,9 @@ export default function Navbar() {
 
         <div className="flex shrink-0 items-center gap-3">
           {user ? (
-            <Button variant="default" className="rounded-full p-5" >Get Started</Button>
+            <Button asChild variant="default" className="rounded-full p-5" ><Link href="/dashboard">Open workspace</Link></Button>
           ) : (
-            <Button variant="outline" className="rounded-full p-5" >Sign In</Button>
+            <Button asChild variant="outline" className="rounded-full p-5" disabled={loading}><Link href="/login">Sign in</Link></Button>
           )}
         </div>
       </nav>

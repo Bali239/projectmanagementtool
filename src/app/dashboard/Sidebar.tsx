@@ -4,12 +4,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ArrowUpRight, CheckSquare2, ChevronDown, Home, LayoutDashboard, Plus, Settings2 } from "lucide-react"
 import Image from "next/image"
+import { useAuth } from "@/context/AuthContext"
+import { UserAvatar } from "@/components/UserAvatar"
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { user } = useAuth()
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 text-slate-700">
@@ -73,20 +76,15 @@ export default function Sidebar() {
       </div> */}
 
       <div className="mt-auto space-y-3 pt-8">
-        <button type="button" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-          <Settings2 className="size-[18px] text-slate-400" strokeWidth={1.9} />
-          Settings
-        </button>
+        
 
-        <div className="flex items-center gap-3 border-t border-slate-100 px-2 pt-4">
-          <span className="flex size-9 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">JD</span>
+        <div className="flex items-center gap-3 px-2 pt-4">
+          <UserAvatar user={user} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-800">Your account</p>
-            <p className="truncate text-xs text-slate-500">Workspace member</p>
+            <p className="truncate text-sm font-semibold text-slate-800">{user?.displayName || "Your account"}</p>
+            <p className="truncate text-xs text-slate-500">{user?.email || "Workspace member"}</p>
           </div>
-          <button type="button" aria-label="Account options" className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            <ChevronDown className="size-4" />
-          </button>
+          
         </div>
       </div>
     </aside>

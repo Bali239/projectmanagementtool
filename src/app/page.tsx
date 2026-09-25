@@ -1,5 +1,6 @@
 
 import Navbar from "./Navbar"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -21,12 +22,12 @@ export default function Home() {
             and turning great ideas into meaningful progress.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
-            <button className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
+            <Link href="/signup" className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
               Start a project
-            </button>
-            <button className="rounded-full border border-white/15 px-6 py-3 font-semibold text-white transition hover:border-white/30 hover:bg-white/5">
+            </Link>
+            <Link href="/login" className="rounded-full border border-white/15 px-6 py-3 font-semibold text-white transition hover:border-white/30 hover:bg-white/5">
               Explore workspace
-            </button>
+            </Link>
           </div>
         </div>
       </section>
