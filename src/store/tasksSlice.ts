@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
-export const taskStatuses = ["todo", "in-progress", "in-review", "completed", "due-date"] as const
+export const taskStatuses = ["todo", "in-progress", "in-review", "completed"] as const
 export type TaskStatus = (typeof taskStatuses)[number]
 
 export type BoardTask = {

@@ -17,7 +17,6 @@ const statusLabels: Record<TaskStatus, string> = {
   "in-progress": "In progress",
   "in-review": "In review",
   completed: "Completed",
-  "due-date": "Due date",
 }
 
 export default function CreateTaskForm() {

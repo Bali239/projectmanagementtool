@@ -2,7 +2,7 @@ import { z } from "zod"
 import { database, ensureTaskSchema } from "@/lib/server/db"
 import type { BoardTask } from "@/store/tasksSlice"
 
-export const taskStatusSchema = z.enum(["todo", "in-progress", "in-review", "completed", "due-date"])
+export const taskStatusSchema = z.enum(["todo", "in-progress", "in-review", "completed"])
 
 export const taskInputSchema = z.object({
   title: z.string(),
@@ -19,7 +19,7 @@ type TaskRow = {
   id: string
   title: string
   description: string
-  status: BoardTask["status"]
+  status: string
   dueDate: string | null
   dueTime: string | null
   createdAt: string | Date
@@ -30,7 +30,7 @@ export function toBoardTask(row: TaskRow): BoardTask {
     id: row.id,
     title: row.title,
     description: row.description,
-    status: row.status,
+    status: row.status === "due-date" ? "todo" : taskStatusSchema.parse(row.status),
     dueDate: row.dueDate ?? null,
     dueTime: row.dueTime ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,

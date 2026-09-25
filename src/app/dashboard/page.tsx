@@ -16,7 +16,6 @@ const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: strin
   { id: "in-progress", label: "In progress", icon: Clock3, tone: "text-blue-500" },
   { id: "in-review", label: "In review", icon: Eye, tone: "text-violet-500" },
   { id: "completed", label: "Completed", icon: Check, tone: "text-emerald-500" },
-  { id: "due-date", label: "Due date", icon: CalendarDays, tone: "text-amber-500" },
 ]
 
 const statusLabels = Object.fromEntries(columns.map(({ id, label }) => [id, label])) as Record<TaskStatus, string>
@@ -77,7 +76,7 @@ function TaskCard({ task, index }: { task: BoardTask; index: number }) {
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-slate-50 px-1.5 py-1 text-[10px] font-medium text-slate-600 ring-1 ring-inset ring-slate-200/80">
-          <span className={`size-1.5 rounded-full ${task.status === "completed" ? "bg-emerald-500" : task.status === "in-progress" ? "bg-blue-500" : task.status === "in-review" ? "bg-violet-500" : task.status === "due-date" ? "bg-amber-500" : "bg-slate-400"}`} />
+          <span className={`size-1.5 rounded-full ${task.status === "completed" ? "bg-emerald-500" : task.status === "in-progress" ? "bg-blue-500" : task.status === "in-review" ? "bg-violet-500" : "bg-slate-400"}`} />
           {statusLabels[task.status]}
         </span>
         <div className="ml-auto flex items-center gap-1">
@@ -123,7 +122,7 @@ function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd, searching 
   const { ref, isDropTarget } = useDroppable({ id: `column-${status}`, data: { status } })
 
   return (
-    <section className="flex w-[268px] shrink-0 flex-col" aria-label={`${label} tasks`}>
+    <section className="flex h-full w-[268px] shrink-0 flex-col" aria-label={`${label} tasks`}>
       <header className="mb-3 flex h-9 items-center gap-2 px-1">
         <Icon className={`size-[17px] ${tone}`} strokeWidth={2.1} />
         <h2 className="text-sm font-semibold text-slate-700">{label}</h2>
@@ -132,7 +131,7 @@ function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd, searching 
       </header>
       <div
         ref={ref}
-        className={`flex min-h-[calc(100vh-250px)] flex-1 flex-col gap-2.5 rounded-xl border p-2 transition-colors ${isDropTarget ? "border-indigo-300 bg-indigo-50/70" : "border-slate-200/80 bg-slate-100/70"}`}
+        className={`flex min-h-0 flex-1 touch-pan-y flex-col gap-2.5 overflow-y-auto overscroll-contain rounded-xl border p-2 transition-colors ${isDropTarget ? "border-indigo-300 bg-indigo-50/70" : "border-slate-200/80 bg-slate-100/70"}`}
       >
         {tasks.map((task, index) => <TaskCard key={task.id} task={task} index={index} />)}
         {tasks.length === 0 && (
@@ -172,9 +171,9 @@ export default function DashboardPage() {
         <button type="button" onClick={() => dispatch(openCreateTask("todo"))} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"><Plus className="size-4" /> Add task</button>
       </div>
 
-      <div className="overflow-x-auto pb-5">
+      <div className="h-[calc(100dvh-250px)] min-h-[320px] overflow-x-auto overflow-y-hidden pb-2">
         {!hydrated ? (
-          <div className="grid min-w-max grid-cols-5 gap-4">
+            <div className="grid h-full min-w-max grid-cols-4 gap-4">
             {columns.map((column) => <div key={column.id} className="h-72 w-[268px] animate-pulse rounded-xl bg-slate-200/70" />)}
           </div>
         ) : (
@@ -182,18 +181,26 @@ export default function DashboardPage() {
             sensors={(sensors) => sensors.map((sensor) => sensor === PointerSensor
               ? PointerSensor.configure({ activationConstraints: [] })
               : sensor)}
+            onDragOver={(event) => {
+              const sourceStatus = event.operation.source?.data.status
+              const targetStatus = event.operation.target?.data.status
+              // The sortable plugin reparents elements directly across lists.
+              // React owns these cards, so let React move them after the drop instead.
+              if (sourceStatus && targetStatus && sourceStatus !== targetStatus) event.preventDefault()
+            }}
             onDragEnd={(event) => {
             if (event.canceled) return
             const taskId = event.operation.source?.data.taskId
             const status = event.operation.target?.data.status as TaskStatus | undefined
-            const targetTaskId = event.operation.target?.data.taskId
             if (typeof taskId === "string" && status && columns.some((column) => column.id === status)) {
               const task = tasks.find((item) => item.id === taskId)
-              if (task) moveMutation.mutate({ ...task, status })
+              if (task) {
+                moveMutation.mutate({ ...task, status })
+              }
             }
           }}
           >
-            <div className="flex min-w-max gap-4">
+            <div className="flex h-full min-w-max items-stretch gap-4">
               {columns.map((column) => (
                 <BoardColumn
                   key={column.id}
