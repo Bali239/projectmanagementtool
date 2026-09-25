@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { useMutation } from "@tanstack/react-query"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -20,9 +20,12 @@ const signupSchema = loginSchema.extend({
 })
 
 type AuthFormProps = { mode: "login" | "signup" | "forgot" }
-type LoginValues = z.infer<typeof loginSchema>
-type SignupValues = z.infer<typeof signupSchema>
-type ForgotValues = z.infer<typeof emailSchema>
+type AuthFormValues = {
+  name?: string
+  email: string
+  password?: string
+  confirmPassword?: string
+}
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter()
@@ -30,12 +33,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const isSignup = mode === "signup"
   const isForgot = mode === "forgot"
   const schema = isSignup ? signupSchema : isForgot ? emailSchema : loginSchema
-  const form = useForm<LoginValues & Partial<SignupValues> & ForgotValues>({ resolver: zodResolver(schema), defaultValues: { name: "", email: "", password: "", confirmPassword: "" } })
+  const form = useForm<AuthFormValues>({ resolver: zodResolver(schema) as Resolver<AuthFormValues>, defaultValues: { name: "", email: "", password: "", confirmPassword: "" } })
   const mutation = useMutation({
-    mutationFn: async (values: LoginValues & Partial<SignupValues> & ForgotValues) => {
+    mutationFn: async (values: AuthFormValues) => {
       if (isForgot) return sendPasswordReset(values.email)
-      if (isSignup) return signupWithEmail(values.name ?? "", values.email, values.password)
-      return loginWithEmail(values.email, values.password)
+      if (isSignup) return signupWithEmail(values.name ?? "", values.email, values.password ?? "")
+      return loginWithEmail(values.email, values.password ?? "")
     },
     onSuccess: () => {
       if (isForgot) {
@@ -93,7 +96,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   )
 }
 
-function Field({ label, name, type, placeholder, form }: { label: string; name: "name" | "email" | "password" | "confirmPassword"; type: string; placeholder: string; form: ReturnType<typeof useForm<LoginValues & Partial<SignupValues> & ForgotValues>> }) {
+function Field({ label, name, type, placeholder, form }: { label: string; name: keyof AuthFormValues; type: string; placeholder: string; form: ReturnType<typeof useForm<AuthFormValues>> }) {
   const error = form.formState.errors[name]?.message
   return (
     <label className="block text-sm font-medium text-slate-700">

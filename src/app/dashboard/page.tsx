@@ -3,9 +3,12 @@
 import { DragDropProvider } from "@dnd-kit/react"
 import { useSortable } from "@dnd-kit/react/sortable"
 import { useDroppable } from "@dnd-kit/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarDays, Check, Circle, Clock3, Eye, Plus, Sparkles } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { openCreateTask, openTaskDetails, taskMoved, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
+import { openCreateTask, openTaskDetails, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
+import { useAuth } from "@/context/AuthContext"
+import { fetchTasks, updateTask } from "@/lib/api/tasks"
 
 const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: string }[] = [
   { id: "todo", label: "To do", icon: Circle, tone: "text-slate-400" },
@@ -88,14 +91,19 @@ function BoardColumn({ status, label, icon: Icon, tone, tasks, onAdd, searching 
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch()
-  const { items: tasks, hydrated, searchQuery } = useAppSelector((state) => state.tasks)
-  const normalizedQuery = searchQuery.trim().toLocaleLowerCase()
-  const filteredTasks = normalizedQuery
-    ? tasks.filter((task) => {
-        const description = task.description.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")
-        return `${task.title} ${description}`.toLocaleLowerCase().includes(normalizedQuery)
-      })
-    : tasks
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const { searchQuery } = useAppSelector((state) => state.tasks)
+  const { data: tasks = [], isSuccess: hydrated } = useQuery({
+    queryKey: ["tasks", user?.uid, searchQuery],
+    queryFn: () => fetchTasks(searchQuery),
+    enabled: !!user,
+  })
+  const moveMutation = useMutation({
+    mutationFn: updateTask,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  })
+  const searching = !!searchQuery.trim()
 
   return (
     <div className="mx-auto max-w-[1800px]">
@@ -120,7 +128,8 @@ export default function DashboardPage() {
             const status = event.operation.target?.data.status as TaskStatus | undefined
             const targetTaskId = event.operation.target?.data.taskId
             if (typeof taskId === "string" && status && columns.some((column) => column.id === status)) {
-              dispatch(taskMoved({ taskId, status, targetTaskId: typeof targetTaskId === "string" ? targetTaskId : undefined }))
+              const task = tasks.find((item) => item.id === taskId)
+              if (task) moveMutation.mutate({ ...task, status })
             }
           }}>
             <div className="flex min-w-max gap-4">
@@ -131,9 +140,9 @@ export default function DashboardPage() {
                   label={column.label}
                   icon={column.icon}
                   tone={column.tone}
-                  tasks={filteredTasks.filter((task) => task.status === column.id)}
+                  tasks={tasks.filter((task) => task.status === column.id)}
                   onAdd={() => dispatch(openCreateTask(column.id))}
-                  searching={!!normalizedQuery}
+                  searching={searching}
                 />
               ))}
             </div>
