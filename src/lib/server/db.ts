@@ -5,8 +5,8 @@ let schemaPromise: Promise<void> | undefined
 
 function getDatabase() {
   if (!sql) {
-    const connectionString = process.env.POSTGRE_SQL_DATABASE_URL || process.env.DATABASE_URL
-    if (!connectionString) throw new Error("POSTGRE_SQL_DATABASE_URL or DATABASE_URL is required")
+    const connectionString = process.env.POSTGRE_SQL_DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL
+    if (!connectionString) throw new Error("POSTGRE_SQL_DATABASE_URL, POSTGRES_URL, or DATABASE_URL is required")
     sql = neon(connectionString)
   }
 
