@@ -1,8 +1,10 @@
 "use client"
 
 import { Editor } from "@tinymce/tinymce-react"
+import { DatePicker, TimePicker } from "antd"
+import dayjs from "dayjs"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, LoaderCircle, X } from "lucide-react"
+import { LoaderCircle, X } from "lucide-react"
 import { FormEvent, useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { createTask } from "@/lib/api/tasks"
@@ -26,7 +28,8 @@ export default function CreateTaskForm() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState<TaskStatus>(createStatus)
-  const [dueDate, setDueDate] = useState("")
+  const [dueDate, setDueDate] = useState<string | null>(null)
+  const [dueTime, setDueTime] = useState<string | null>(null)
 
   useEffect(() => setStatus(createStatus), [createStatus])
 
@@ -37,13 +40,14 @@ export default function CreateTaskForm() {
       dispatch(closeCreateTask())
       setTitle("")
       setDescription("")
-      setDueDate("")
+      setDueDate(null)
+      setDueTime(null)
     },
   })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    mutation.mutate({ title, description, status, dueDate })
+    mutation.mutate({ title, description, status, dueDate, dueTime })
   }
 
   return (
@@ -89,13 +93,8 @@ export default function CreateTaskForm() {
                 {taskStatuses.map((value) => <option key={value} value={value}>{statusLabels[value]}</option>)}
               </select>
             </label>
-            <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Due date
-              <span className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium normal-case tracking-normal text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
-              </span>
-            </label>
+            <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Due date<DatePicker value={dueDate ? dayjs(dueDate) : null} onChange={(value) => { setDueDate(value?.format("YYYY-MM-DD") ?? null); if (!value) setDueTime(null) }} format="MMM D, YYYY" placeholder="Choose a date" className="!h-11 !w-full !rounded-lg" /></label>
+            <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Due time<TimePicker value={dueTime ? dayjs(`2000-01-01T${dueTime}`) : null} onChange={(value) => setDueTime(value?.format("HH:mm") ?? null)} use12Hours format="h:mm A" placeholder="Choose a time" disabled={!dueDate} className="!h-11 !w-full !rounded-lg" /></label>
           </div>
 
           {mutation.isError && <p className="mt-4 text-sm text-red-600">{mutation.error.message}</p>}

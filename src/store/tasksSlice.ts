@@ -8,7 +8,8 @@ export type BoardTask = {
   title: string
   description: string
   status: TaskStatus
-  dueDate: string
+  dueDate: string | null
+  dueTime: string | null
   createdAt: string
 }
 

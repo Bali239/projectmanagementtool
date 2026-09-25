@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     await ensureTaskSchema()
     const task = parsed.data
     const id = randomUUID()
-    const rows = await database()`INSERT INTO tasks (id, user_id, title, description, status, due_date)
-      VALUES (${id}, ${user.uid}, ${task.title}, ${task.description}, ${task.status}, ${task.dueDate || null})
-      RETURNING id, title, description, status, due_date AS "dueDate", created_at AS "createdAt"`
+    const rows = await database()`INSERT INTO tasks (id, user_id, title, description, status, due_date, due_time)
+      VALUES (${id}, ${user.uid}, ${task.title}, ${task.description}, ${task.status}, ${task.dueDate || null}, ${task.dueDate ? task.dueTime || null : null})
+      RETURNING id, title, description, status, due_date AS "dueDate", due_time AS "dueTime", created_at AS "createdAt"`
 
     const row = (rows as unknown as Record<number, Parameters<typeof toBoardTask>[0]>)[0]
     if (!row) return Response.json({ error: "Task was not created" }, { status: 500 })

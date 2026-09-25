@@ -5,7 +5,8 @@ type TaskInput = {
   title: string
   description: string
   status: TaskStatus
-  dueDate: string
+  dueDate: string | null
+  dueTime: string | null
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -35,7 +36,7 @@ export function createTask(input: TaskInput) {
 }
 
 export function updateTask(task: BoardTask) {
-  const input: TaskInput = { title: task.title, description: task.description, status: task.status, dueDate: task.dueDate }
+  const input: TaskInput = { title: task.title, description: task.description, status: task.status, dueDate: task.dueDate, dueTime: task.dueTime }
   return request<BoardTask>(`/api/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify(input) })
 }
 

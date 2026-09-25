@@ -1,14 +1,15 @@
 "use client"
 
-import { DragDropProvider } from "@dnd-kit/react"
+import { DragDropProvider, PointerSensor } from "@dnd-kit/react"
 import { useSortable } from "@dnd-kit/react/sortable"
 import { useDroppable } from "@dnd-kit/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, Check, Circle, Clock3, Eye, Plus, Sparkles } from "lucide-react"
+import { CalendarDays, Check, Circle, Clock3, Eye, GripVertical, Pencil, Plus, Sparkles } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { openCreateTask, openTaskDetails, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, updateTask } from "@/lib/api/tasks"
+import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 
 const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: string }[] = [
   { id: "todo", label: "To do", icon: Circle, tone: "text-slate-400" },
@@ -18,9 +19,51 @@ const columns: { id: TaskStatus; label: string; icon: typeof Circle; tone: strin
   { id: "due-date", label: "Due date", icon: CalendarDays, tone: "text-amber-500" },
 ]
 
+const statusLabels = Object.fromEntries(columns.map(({ id, label }) => [id, label])) as Record<TaskStatus, string>
+
+function descriptionPreview(html: string) {
+  if (!html) return ""
+
+  const decodeCodePoint = (value: string, radix = 10) => {
+    const codePoint = parseInt(value, radix)
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : " "
+  }
+
+  const text = html
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<li\b[^>]*>/gi, "\n• ")
+    .replace(/<\/(?:li)\s*>/gi, "")
+    .replace(/<h[1-6]\b[^>]*>/gi, "\n")
+    .replace(/<\/(?:h[1-6])\s*>/gi, "\n")
+    .replace(/<\/(?:p|div|blockquote|ul|ol)\s*>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, value: string) => decodeCodePoint(value))
+    .replace(/&#x([\da-f]+);/gi, (_, value: string) => decodeCodePoint(value, 16))
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+
+  return text
+}
+
 function TaskCard({ task, index }: { task: BoardTask; index: number }) {
   const dispatch = useAppDispatch()
-  const { ref, isDragging } = useSortable({
+  const dueLabel = formatTaskDueDate(task.dueDate, task.dueTime, "compact")
+  const preview = descriptionPreview(task.description)
+  const createdLabel = task.createdAt && !Number.isNaN(new Date(task.createdAt).getTime())
+    ? new Date(task.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : null
+  const { ref, handleRef, isDragging } = useSortable({
     id: task.id,
     index,
     group: task.status,
@@ -30,26 +73,39 @@ function TaskCard({ task, index }: { task: BoardTask; index: number }) {
   return (
     <article
       ref={ref}
-      role="button"
-      tabIndex={0}
-      aria-label={`Open details for ${task.title}`}
-      onClick={() => dispatch(openTaskDetails(task.id))}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") dispatch(openTaskDetails(task.id))
-      }}
-      className={`cursor-grab rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-slate-300 hover:shadow-md active:cursor-grabbing ${isDragging ? "opacity-45 ring-2 ring-indigo-300" : ""}`}
+      className={`group rounded-xl border border-slate-200 border-l-[3px] border-l-indigo-400 bg-white p-3.5 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-indigo-200 hover:border-l-indigo-500 hover:shadow-md ${isDragging ? "opacity-45 ring-2 ring-indigo-300" : ""}`}
     >
-      <div className="mb-2.5 flex items-start justify-between gap-2">
-        <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-slate-500">{task.id.slice(0, 6)}</span>
-        <span className="size-5 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-center text-[9px] font-bold leading-5 text-white" title="Assigned to you">JD</span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-slate-50 px-1.5 py-1 text-[10px] font-medium text-slate-600 ring-1 ring-inset ring-slate-200/80">
+          <span className={`size-1.5 rounded-full ${task.status === "completed" ? "bg-emerald-500" : task.status === "in-progress" ? "bg-blue-500" : task.status === "in-review" ? "bg-violet-500" : task.status === "due-date" ? "bg-amber-500" : "bg-slate-400"}`} />
+          {statusLabels[task.status]}
+        </span>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            ref={handleRef}
+            type="button"
+            aria-label={`Drag ${task.title}`}
+            title="Drag task"
+            className="cursor-grab rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 active:cursor-grabbing"
+          ><GripVertical className="size-4" /></button>
+          <button
+            type="button"
+            aria-label={`Open details for ${task.title}`}
+            title="Open task details"
+            onPointerDown={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+            onClick={() => dispatch(openTaskDetails(task.id))}
+            className="rounded-md p-1 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          ><Pencil className="size-3.5" /></button>
+        </div>
       </div>
-      <h3 className="text-sm font-semibold leading-5 text-slate-800">{task.title}</h3>
-      {task.description.replace(/<[^>]*>/g, " ").trim() && (
-        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-500">{task.description.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").trim()}</p>
+      <h3 title={task.title} className="line-clamp-2 break-words text-[14px] font-semibold leading-[1.4] text-slate-800 group-hover:text-indigo-800">{task.title}</h3>
+      {preview && (
+        <p onPointerDown={(event) => event.stopPropagation()} className="mt-1.5 max-h-24 touch-pan-y overflow-y-auto overscroll-contain whitespace-pre-line break-words pr-1 text-[12px] leading-[1.55] text-slate-600">{preview}</p>
       )}
-      <div className="mt-3 flex min-h-6 items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
-        <span className="text-[10px] font-medium text-slate-400">Task</span>
-        {task.dueDate && <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500"><CalendarDays className="size-3" />{new Date(`${task.dueDate}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}
+      <div className="mt-3 flex min-h-6 flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-t border-slate-100 pt-2.5">
+        {dueLabel && <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-1 text-[10px] font-semibold text-amber-800 ring-1 ring-inset ring-amber-200/80"><CalendarDays className="size-3" />{dueLabel}</span>}
+        {createdLabel && <span className="text-[10px] text-slate-400">Created {createdLabel}</span>}
       </div>
     </article>
   )
@@ -122,7 +178,11 @@ export default function DashboardPage() {
             {columns.map((column) => <div key={column.id} className="h-72 w-[268px] animate-pulse rounded-xl bg-slate-200/70" />)}
           </div>
         ) : (
-          <DragDropProvider onDragEnd={(event) => {
+          <DragDropProvider
+            sensors={(sensors) => sensors.map((sensor) => sensor === PointerSensor
+              ? PointerSensor.configure({ activationConstraints: [] })
+              : sensor)}
+            onDragEnd={(event) => {
             if (event.canceled) return
             const taskId = event.operation.source?.data.taskId
             const status = event.operation.target?.data.status as TaskStatus | undefined
@@ -131,7 +191,8 @@ export default function DashboardPage() {
               const task = tasks.find((item) => item.id === taskId)
               if (task) moveMutation.mutate({ ...task, status })
             }
-          }}>
+          }}
+          >
             <div className="flex min-w-max gap-4">
               {columns.map((column) => (
                 <BoardColumn

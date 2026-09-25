@@ -12,6 +12,7 @@ export const taskInputSchema = z.object({
   ),
   status: taskStatusSchema,
   dueDate: z.string().nullable().or(z.literal("")),
+  dueTime: z.string().nullable().or(z.literal("")),
 })
 
 type TaskRow = {
@@ -20,6 +21,7 @@ type TaskRow = {
   description: string
   status: BoardTask["status"]
   dueDate: string | null
+  dueTime: string | null
   createdAt: string | Date
 }
 
@@ -29,7 +31,8 @@ export function toBoardTask(row: TaskRow): BoardTask {
     title: row.title,
     description: row.description,
     status: row.status,
-    dueDate: row.dueDate ?? "",
+    dueDate: row.dueDate ?? null,
+    dueTime: row.dueTime ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
   }
 }
@@ -38,9 +41,9 @@ export async function listTasks(userId: string, titleQuery = "") {
   await ensureTaskSchema()
   const query = titleQuery.trim()
   const rows = query
-    ? await database()`SELECT id, title, description, status, due_date AS "dueDate", created_at AS "createdAt"
+    ? await database()`SELECT id, title, description, status, due_date AS "dueDate", due_time AS "dueTime", created_at AS "createdAt"
         FROM tasks WHERE user_id = ${userId} AND title ILIKE ${`%${query}%`} ORDER BY created_at DESC`
-    : await database()`SELECT id, title, description, status, due_date AS "dueDate", created_at AS "createdAt"
+    : await database()`SELECT id, title, description, status, due_date AS "dueDate", due_time AS "dueTime", created_at AS "createdAt"
         FROM tasks WHERE user_id = ${userId} ORDER BY created_at DESC`
   const taskRows = rows as unknown as TaskRow[]
   return taskRows.map((row: TaskRow) => toBoardTask(row))

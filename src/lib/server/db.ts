@@ -24,9 +24,11 @@ export async function ensureTaskSchema() {
         description TEXT NOT NULL DEFAULT '',
         status TEXT NOT NULL CHECK (status IN ('todo', 'in-progress', 'in-review', 'completed', 'due-date')),
         due_date DATE,
+        due_time TIME,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`
+      await database`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_time TIME`
       await database`CREATE INDEX IF NOT EXISTS tasks_user_created_idx ON tasks (user_id, created_at DESC)`
     })().catch((error) => {
       schemaPromise = undefined

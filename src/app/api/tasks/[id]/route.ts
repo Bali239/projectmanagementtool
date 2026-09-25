@@ -13,9 +13,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     await ensureTaskSchema()
     const task = parsed.data
-    const rows = await database()`UPDATE tasks SET title = ${task.title}, description = ${task.description}, status = ${task.status}, due_date = ${task.dueDate || null}, updated_at = NOW()
+    const rows = await database()`UPDATE tasks SET title = ${task.title}, description = ${task.description}, status = ${task.status}, due_date = ${task.dueDate || null}, due_time = ${task.dueDate ? task.dueTime || null : null}, updated_at = NOW()
       WHERE id = ${id} AND user_id = ${user.uid}
-      RETURNING id, title, description, status, due_date AS "dueDate", created_at AS "createdAt"`
+      RETURNING id, title, description, status, due_date AS "dueDate", due_time AS "dueTime", created_at AS "createdAt"`
     const updatedRow = (rows as unknown as Record<number, Parameters<typeof toBoardTask>[0]>)[0]
     if (!updatedRow) return Response.json({ error: "Task not found" }, { status: 404 })
 

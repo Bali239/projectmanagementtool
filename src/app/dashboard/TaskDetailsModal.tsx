@@ -1,11 +1,14 @@
 "use client"
 
 import { Editor } from "@tinymce/tinymce-react"
+import { DatePicker, TimePicker } from "antd"
+import dayjs from "dayjs"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarDays, Check, Clock3, Pencil, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { deleteTask, updateTask, fetchTasks } from "@/lib/api/tasks"
+import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeTaskDetails, editTaskDetails, showTaskDetails, taskStatuses, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
 
@@ -27,7 +30,8 @@ export default function TaskDetailsModal() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState<TaskStatus>("todo")
-  const [dueDate, setDueDate] = useState("")
+  const [dueDate, setDueDate] = useState<string | null>(null)
+  const [dueTime, setDueTime] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
@@ -36,6 +40,7 @@ export default function TaskDetailsModal() {
     setDescription(task.description)
     setStatus(task.status)
     setDueDate(task.dueDate)
+    setDueTime(task.dueTime)
   }, [task])
 
   useEffect(() => {
@@ -53,7 +58,7 @@ export default function TaskDetailsModal() {
   const saveMutation = useMutation({
     mutationFn: updateTask,
     onSuccess: (updated) => {
-      queryClient.setQueryData<BoardTask[]>(["tasks", user?.uid], (current = []) => current.map((item) => item.id === updated.id ? updated : item))
+      queryClient.setQueriesData<BoardTask[]>({ queryKey: ["tasks", user?.uid] }, (current) => current?.map((item) => item.id === updated.id ? updated : item))
       queryClient.invalidateQueries({ queryKey: ["tasks", user?.uid] })
       dispatch(showTaskDetails())
     },
@@ -61,7 +66,7 @@ export default function TaskDetailsModal() {
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: (_, taskId) => {
-      queryClient.setQueryData<BoardTask[]>(["tasks", user?.uid], (current = []) => current.filter((item) => item.id !== taskId))
+      queryClient.setQueriesData<BoardTask[]>({ queryKey: ["tasks", user?.uid] }, (current) => current?.filter((item) => item.id !== taskId))
       queryClient.invalidateQueries({ queryKey: ["tasks", user?.uid] })
       setConfirmDelete(false)
       dispatch(closeTaskDetails())
@@ -70,6 +75,7 @@ export default function TaskDetailsModal() {
 
   if (!activeTaskId) return null
   const editing = taskView === "edit"
+  const dueLabel = formatTaskDueDate(task?.dueDate ?? null, task?.dueTime ?? null)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) dispatch(closeTaskDetails()) }}>
@@ -96,12 +102,13 @@ export default function TaskDetailsModal() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Status<select value={status} onChange={(event) => setStatus(event.target.value as TaskStatus)} className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium normal-case tracking-normal text-slate-700 outline-none focus:border-indigo-400"><option value="todo">To do</option>{taskStatuses.filter((item) => item !== "todo").map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select></label>
-                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Due date<input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium normal-case tracking-normal text-slate-700 outline-none focus:border-indigo-400" /></label>
+                <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Due date<DatePicker value={dueDate ? dayjs(dueDate.slice(0, 10)) : null} onChange={(value) => { setDueDate(value?.format("YYYY-MM-DD") ?? null); if (!value) setDueTime(null) }} format="MMM D, YYYY" placeholder="Choose a date" className="!h-11 !w-full !rounded-lg" /></label>
+                <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Due time<TimePicker value={dueTime ? dayjs(`2000-01-01T${dueTime}`) : null} onChange={(value) => setDueTime(value?.format("HH:mm") ?? null)} use12Hours format="h:mm A" placeholder="Choose a time" disabled={!dueDate} className="!h-11 !w-full !rounded-lg" /></label>
               </div>
             </div> : <>
               <div className="mb-6 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700"><Clock3 className="size-3.5" />{labels[task.status]}</span>
-                {task.dueDate && <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><CalendarDays className="size-3.5" />Due {new Date(`${task.dueDate}T00:00:00`).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</span>}
+                {dueLabel && <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><CalendarDays className="size-3.5" />Due {dueLabel}</span>}
               </div>
               <div className="mb-2 flex items-center gap-2"><span className="size-1.5 rounded-full bg-indigo-500" /><h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Description</h3></div>
               {task.description.trim() ? <div className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50/60 p-1">
@@ -113,7 +120,7 @@ export default function TaskDetailsModal() {
           </div>
           <footer className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-7">
             {editing ? <button type="button" onClick={() => dispatch(showTaskDetails())} className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button> : <div className="flex items-center gap-2"><button type="button" onClick={() => setConfirmDelete(true)} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3.5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"><Trash2 className="size-4" />Delete</button><button type="button" onClick={() => dispatch(closeTaskDetails())} className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Close</button></div>}
-            {editing ? <button type="button" disabled={saveMutation.isPending || !title.trim()} onClick={() => saveMutation.mutate({ ...task, title, description, status, dueDate })} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"><Check className="size-4" />{saveMutation.isPending ? "Saving…" : "Save changes"}</button> : <button type="button" onClick={() => dispatch(editTaskDetails())} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"><Pencil className="size-4" />Edit task</button>}
+            {editing ? <button type="button" disabled={saveMutation.isPending || !title.trim()} onClick={() => saveMutation.mutate({ ...task, title, description, status, dueDate, dueTime: dueDate ? dueTime : null })} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"><Check className="size-4" />{saveMutation.isPending ? "Saving…" : "Save changes"}</button> : <button type="button" onClick={() => dispatch(editTaskDetails())} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"><Pencil className="size-4" />Edit task</button>}
           </footer>
         </>}
         {!task && <p role={isError ? "alert" : "status"} className={`px-7 py-10 text-center text-sm ${isError ? "text-red-600" : "text-slate-500"}`}>{isError ? error.message : isSuccess ? "This task may have been deleted or is no longer available." : "Loading task details…"}</p>}
