@@ -62,6 +62,8 @@ export default function TaskDetailModal() {
         <div className="flex gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div>
       </div> : null}
       width="min(720px, calc(100vw - 24px))"
+      classNames={{ body: "task-detail-modal-body" }}
+      styles={{ body: { maxHeight: "min(60dvh, 640px)", overflowY: "auto" } }}
       destroyOnHidden
       centered
     >
@@ -74,10 +76,10 @@ export default function TaskDetailModal() {
           <section>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Description</h3>
             {task.description.trim() ? <div className="overflow-hidden rounded-md border border-slate-200">
-              <Editor tinymceScriptSrc="/tinymce/tinymce.min.js" licenseKey="gpl" value={task.description} readonly init={{ height: 240, menubar: false, toolbar: false, statusbar: false, branding: false, promotion: false, content_style: "body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.7; color: #334155; padding: 12px 16px; } h1,h2,h3 { color: #0f172a; } ul,ol { padding-left: 1.5rem; }" }} />
+              <Editor tinymceScriptSrc="/tinymce/tinymce.min.js" licenseKey="gpl" value={task.description} readonly init={{ height: 240, menubar: false, toolbar: false, statusbar: false, branding: false, promotion: false, content_style: "html { scrollbar-width: none; -ms-overflow-style: none; } html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; } body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.7; color: #334155; padding: 12px 16px; } h1,h2,h3 { color: #0f172a; } ul,ol { padding-left: 1.5rem; }" }} />
             </div> : <p className="rounded-md border border-dashed border-slate-300 px-4 py-7 text-center text-sm text-slate-400">No description added.</p>}
           </section>
-          <p className="text-xs text-slate-400">Created {new Date(task.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} <span className="font-mono">· {task.id.slice(0, 8)}</span></p>
+          <p className="text-xs text-slate-400">Created {new Date(task.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</p>
         </div>
       ) : <div className="flex min-h-48 items-center justify-center">{isPending ? <Spin /> : <p className="text-sm text-slate-500">This task is no longer available.</p>}</div>}
     </Modal>

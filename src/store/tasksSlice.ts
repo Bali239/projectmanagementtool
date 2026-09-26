@@ -44,6 +44,10 @@ const tasksSlice = createSlice({
       state.activeTaskId = action.payload
       state.taskView = "details"
     },
+    openTaskEdit(state, action: PayloadAction<string>) {
+      state.activeTaskId = action.payload
+      state.taskView = "edit"
+    },
     editTaskDetails(state) {
       if (state.activeTaskId) state.taskView = "edit"
     },
@@ -64,6 +68,7 @@ export const {
   openCreateTask,
   closeCreateTask,
   openTaskDetails,
+  openTaskEdit,
   editTaskDetails,
   showTaskDetails,
   closeTaskDetails,
