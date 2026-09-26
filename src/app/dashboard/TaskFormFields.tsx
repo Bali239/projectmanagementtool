@@ -37,6 +37,7 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
             tinymceScriptSrc="/tinymce/tinymce.min.js"
             licenseKey="gpl"
             value={description}
+            readonly={false}
             onEditorChange={onDescriptionChange}
             init={{
               height: 230,
@@ -45,6 +46,8 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
               promotion: false,
               plugins: "lists link",
               toolbar: "undo redo | blocks | bold italic underline | bullist numlist | link",
+              link_default_target: "_blank",
+              link_default_protocol: "https",
               content_style: "body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; color: #334155; padding: 10px 12px; }",
             }}
           />

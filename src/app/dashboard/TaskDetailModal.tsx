@@ -76,7 +76,42 @@ export default function TaskDetailModal() {
           <section>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Description</h3>
             {task.description.trim() ? <div className="overflow-hidden rounded-md border border-slate-200">
-              <Editor tinymceScriptSrc="/tinymce/tinymce.min.js" licenseKey="gpl" value={task.description} readonly init={{ height: 240, menubar: false, toolbar: false, statusbar: false, branding: false, promotion: false, content_style: "html { overflow-y: auto; } body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.7; color: #334155; padding: 12px 16px; } h1,h2,h3 { color: #0f172a; } ul,ol { padding-left: 1.5rem; }" }} />
+              <Editor
+                tinymceScriptSrc="/tinymce/tinymce.min.js"
+                licenseKey="gpl"
+                value={task.description}
+                readonly
+                onInit={(_event, editor) => {
+                  editor.on("click", (event) => {
+                    const target = event.target as Node | null
+                    const link = target ? editor.dom.getParent(target, "a") : null
+                    const href = link?.getAttribute("href")?.trim()
+
+                    if (href) {
+                      event.preventDefault()
+                      try {
+                        const url = new URL(href, window.location.href)
+                        if (url.protocol === "http:" || url.protocol === "https:") {
+                          window.open(url.href, "_blank", "noopener,noreferrer")
+                          return
+                        }
+                      } catch {
+                        // Treat invalid or unsupported URLs as search text below.
+                      }
+                    }
+
+                    const block = target ? editor.dom.getParent(target, "p, li, h1, h2, h3, blockquote, pre") : null
+                    const searchText = editor.selection.getContent({ format: "text" }).trim()
+                      || link?.textContent?.trim()
+                      || block?.textContent?.trim()
+                    if (!searchText) return
+
+                    event.preventDefault()
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(searchText)}`, "_blank", "noopener,noreferrer")
+                  })
+                }}
+                init={{ height: 240, menubar: false, toolbar: false, statusbar: false, branding: false, promotion: false, content_style: "html { overflow-y: auto; } body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.7; color: #334155; padding: 12px 16px; } h1,h2,h3 { color: #0f172a; } ul,ol { padding-left: 1.5rem; }" }}
+              />
             </div> : <p className="rounded-md border border-dashed border-slate-300 px-4 py-7 text-center text-sm text-slate-400">No description added.</p>}
           </section>
           <p className="text-xs text-slate-400">Created {new Date(task.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</p>
