@@ -9,7 +9,7 @@ export default function Navbar() {
   const { user, loading } = useAuth()
 
   return (
-      <header className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 overflow-hidden rounded-full border border-white/15 bg-slate-950/85 shadow-lg shadow-black/30 backdrop-blur-xl backdrop-saturate-150">
+      <header style={{ left: "50%", width: "100vw", maxWidth: "100vw", transform: "translateX(-50%)" }} className="fixed top-0 z-50 overflow-hidden border-b border-white/15 bg-slate-950/85 shadow-lg shadow-black/30 backdrop-blur-xl backdrop-saturate-150">
       <nav className="mx-auto flex h-16 w-full items-center gap-3 px-4 sm:px-6">
         
         <Link href="/" className="flex shrink-0 items-center rounded-lg transition-opacity hover:opacity-80">

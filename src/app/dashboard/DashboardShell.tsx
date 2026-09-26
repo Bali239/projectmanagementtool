@@ -29,6 +29,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-[#f4f7f5]">
       <Navbar sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} onCreateTask={() => dispatch(openCreateTask("todo"))} />
+      <div aria-hidden="true" className="h-16 shrink-0" />
       <div className="relative flex flex-1 flex-row">
         {sidebarOpen && <>
           <button type="button" aria-label="Close sidebar" onClick={toggleSidebar} className="absolute inset-0 z-20 bg-slate-900/30 md:hidden" />
