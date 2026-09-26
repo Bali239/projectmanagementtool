@@ -22,16 +22,16 @@ export default function TaskColumn({ column, tasks, searchQuery }: TaskColumnPro
   const { ref, isDropTarget } = useDroppable({ id: `column:${column.status}` })
 
   return (
-    <section ref={ref} aria-label={`${column.label} tasks`} className={`flex min-h-[360px] flex-col rounded-lg border border-slate-200 border-t-[3px] bg-[#edf1ef] p-3 transition-colors ${column.tone} ${isDropTarget ? "bg-teal-50 ring-2 ring-inset ring-teal-300" : ""}`}>
-      <header className="mb-3 flex items-center gap-2 px-1">
-        <span className={`size-2 rounded-full ${column.marker}`} />
-        <h2 className="flex-1 text-sm font-semibold text-slate-800">{column.label}</h2>
+    <section ref={ref} aria-label={`${column.label} tasks`} className={`flex min-h-72 min-w-0 flex-col rounded-xl border border-slate-200/80 border-t-[3px] bg-slate-100/80 p-3 transition-colors sm:p-4 ${column.tone} ${isDropTarget ? "bg-teal-50 ring-2 ring-inset ring-teal-300" : ""}`}>
+      <header className="mb-3 flex items-center gap-2 rounded-lg bg-white/80 px-2.5 py-2 shadow-sm">
+        <span className={`size-2.5 shrink-0 rounded-full ${column.marker}`} />
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{column.label}</h2>
         <Badge count={tasks.length} color="#64748b" overflowCount={99} />
-        <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} onClick={() => dispatch(openCreateTask(column.status))} />
+        <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} className="shrink-0 text-slate-500 hover:bg-slate-100" onClick={() => dispatch(openCreateTask(column.status))} />
       </header>
-      <div className="flex flex-1 flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {tasks.map((task) => <TaskCard key={task.id} task={task} />)}
-        {tasks.length === 0 && <div className={`flex min-h-24 flex-1 items-center justify-center rounded-md border border-dashed text-xs ${searchQuery ? "border-slate-200 text-slate-400" : "border-slate-300 text-slate-400"}`}>{searchQuery ? "No matching tasks" : "Drop tasks here"}</div>}
+        {tasks.length === 0 && <div className="flex min-h-36 flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300/90 bg-white/40 px-3 text-center text-xs text-slate-400">{searchQuery ? "No matching tasks" : "Drop tasks here"}</div>}
       </div>
     </section>
   )

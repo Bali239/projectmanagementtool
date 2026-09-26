@@ -62,7 +62,8 @@ export default function EditTaskModal() {
       onCancel={() => dispatch(showTaskDetails())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Update work item</p><h2 className="m-0 text-lg font-semibold text-slate-900">Edit task</h2></div>}
       footer={null}
-      width={700}
+      width="min(700px, calc(100vw - 24px))"
+      forceRender
       destroyOnHidden
       centered
     >

@@ -57,11 +57,11 @@ export default function TaskDetailModal() {
       open={taskView === "details"}
       onCancel={() => dispatch(closeTaskDetails())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Task details</p><h2 className="m-0 wrap-break-word pr-4 text-lg font-semibold text-slate-900">{task?.title || "Task details"}</h2></div>}
-      footer={task ? <div className="flex justify-between">
+      footer={task ? <div className="flex flex-wrap items-center justify-between gap-2">
         <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending} onClick={confirmDelete}>Delete</Button>
         <div className="flex gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div>
       </div> : null}
-      width={720}
+      width="min(720px, calc(100vw - 24px))"
       destroyOnHidden
       centered
     >

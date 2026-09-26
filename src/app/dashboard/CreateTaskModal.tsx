@@ -48,7 +48,8 @@ export default function CreateTaskModal() {
       onCancel={() => dispatch(closeCreateTask())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">New work item</p><h2 className="m-0 text-lg font-semibold text-slate-900">Create a task</h2></div>}
       footer={null}
-      width={700}
+      width="min(700px, calc(100vw - 24px))"
+      forceRender
       destroyOnHidden
       centered
     >

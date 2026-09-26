@@ -40,7 +40,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   }
 
   return (
-    <header className="relative z-40 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
+    <header className="relative z-40 flex h-16 shrink-0 items-center gap-1.5 border-b border-slate-200 bg-white px-2 sm:gap-3 sm:px-5">
       <Button type="text" aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"} icon={sidebarOpen ? <X size={18} /> : <Menu size={18} />} onClick={onToggleSidebar} />
       <Link href="/dashboard" className="flex shrink-0 items-center gap-2 text-slate-900 no-underline">
         <span className="flex size-8 items-center justify-center rounded-md bg-teal-700 text-white"><LayoutDashboard size={17} /></span>
