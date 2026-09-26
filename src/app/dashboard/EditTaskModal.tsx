@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, updateTask } from "@/lib/api/tasks"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { showTaskDetails, type BoardTask } from "@/store/tasksSlice"
+import { closeTaskEdit, showTaskDetails, type BoardTask } from "@/store/tasksSlice"
 import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
 
 export default function EditTaskModal() {
@@ -59,7 +59,7 @@ export default function EditTaskModal() {
   return (
     <Modal
       open={taskView === "edit"}
-      onCancel={() => dispatch(showTaskDetails())}
+      onCancel={() => dispatch(closeTaskEdit())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Update work item</p><h2 className="m-0 text-lg font-semibold text-slate-900">Edit task</h2></div>}
       footer={null}
       width="min(700px, calc(100vw - 24px))"
@@ -72,7 +72,7 @@ export default function EditTaskModal() {
           <TaskFormFields form={form} description={description} onDescriptionChange={setDescription} />
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <Button onClick={() => dispatch(showTaskDetails())}>Cancel</Button>
+            <Button onClick={() => dispatch(closeTaskEdit())}>Cancel</Button>
             <Button type="primary" htmlType="submit" loading={mutation.isPending}>Save changes</Button>
           </div>
         </Form>
