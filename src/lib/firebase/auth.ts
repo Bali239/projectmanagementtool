@@ -1,11 +1,14 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   GoogleAuthProvider,
+  linkWithCredential,
   sendPasswordResetEmail,
   signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  type User,
 } from "firebase/auth"
 import { getFirebaseAuth } from "./client"
 
@@ -15,6 +18,12 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function loginWithGoogle() {
   return signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider())
+}
+
+export async function linkGoogleAccountWithPassword(user: User, password: string) {
+  if (!user.email) throw new Error("This Google account does not have an email address.")
+  const credential = EmailAuthProvider.credential(user.email, password)
+  return linkWithCredential(user, credential)
 }
 
 export async function signupWithEmail(name: string, email: string, password: string) {
@@ -39,8 +48,11 @@ export function getAuthErrorMessage(error: unknown) {
   const messages: Record<string, string> = {
     "auth/invalid-credential": "The email or password is incorrect.",
     "auth/invalid-email": "Enter a valid email address.",
-    "auth/email-already-in-use": "An account already exists with this email.",
-    "auth/weak-password": "Use a stronger password with at least 6 characters.",
+    "auth/email-already-in-use": "An account already uses this email. Sign in with Google first, then add a password to use both sign-in methods.",
+    "auth/weak-password": "Choose a stronger password that meets all the requirements.",
+    "auth/credential-already-in-use": "This email already has a password account. Sign in to that account first to connect your sign-in methods.",
+    "auth/account-exists-with-different-credential": "This email already has an account with another sign-in method. Sign in with that method first.",
+    "auth/provider-already-linked": "A password is already connected to this account. Sign in with your email and password.",
     "auth/user-disabled": "This account has been disabled.",
     "auth/too-many-requests": "Too many attempts. Please try again later.",
     "auth/network-request-failed": "Check your internet connection and try again.",
