@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const filteredTasks = tasks.filter((task) => task.title.toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()))
 
   return (
-    <section className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-4 sm:gap-6">
+    <section className="mx-auto flex min-h-full w-full max-w-none flex-col gap-4 sm:gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">Project workspace</p>
