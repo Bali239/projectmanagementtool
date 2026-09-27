@@ -47,7 +47,7 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
       {moveTaskMutation.isError && <Alert className="mb-4" type="error" showIcon message="Task could not be moved" description={moveTaskMutation.error.message} />}
       <DragDropProvider onDragEnd={handleDragEnd}>
         <div className="min-w-0 overflow-x-auto overscroll-x-contain pb-3">
-          <div className="grid w-full min-w-[960px] grid-cols-4 items-start gap-4">
+          <div className="dashboard-task-board">
             {boardColumns.map((column) => (
               <TaskColumn key={column.status} column={column} tasks={tasks.filter((task) => task.status === column.status)} searchQuery={searchQuery} />
             ))}

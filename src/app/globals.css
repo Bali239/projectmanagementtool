@@ -13,6 +13,23 @@
   display: none;
 }
 
+.dashboard-task-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .dashboard-task-board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    min-width: 960px;
+  }
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
