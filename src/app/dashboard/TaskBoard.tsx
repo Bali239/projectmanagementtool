@@ -1,7 +1,7 @@
 "use client"
 
 import { DragDropProvider } from "@dnd-kit/react"
-import { Alert, message } from "antd"
+import { Alert } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { updateTask } from "@/lib/api/tasks"
@@ -16,8 +16,6 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
   const { user } = useAuth()
   const searchQuery = useAppSelector((state) => state.tasks.searchQuery)
   const queryKey = ["tasks", user?.uid]
-  const [messageApi, contextHolder] = message.useMessage()
-
   const moveTaskMutation = useMutation({
     mutationFn: updateTask,
     onMutate: async (updatedTask) => {
@@ -28,7 +26,6 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
     },
     onError: (error, _updatedTask, context) => {
       if (context?.previousTasks) queryClient.setQueryData(queryKey, context.previousTasks)
-      messageApi.error(error.message)
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   })
@@ -46,7 +43,6 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
 
   return (
     <>
-      {contextHolder}
       {moveTaskMutation.isError && <Alert className="mb-4" type="error" showIcon message="Task could not be moved" description={moveTaskMutation.error.message} />}
       <DragDropProvider onDragEnd={handleDragEnd}>
         <div className="min-w-0 overflow-x-auto overscroll-x-contain pb-3">

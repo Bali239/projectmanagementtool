@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  type AuthCredential,
   type User,
 } from "firebase/auth"
 import { getFirebaseAuth } from "./client"
@@ -18,6 +19,15 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function loginWithGoogle() {
   return signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider())
+}
+
+export function getGoogleCredentialFromError(error: unknown) {
+  return GoogleAuthProvider.credentialFromError(error as Parameters<typeof GoogleAuthProvider.credentialFromError>[0])
+}
+
+export async function linkGoogleToEmailAccount(email: string, password: string, googleCredential: AuthCredential) {
+  const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password)
+  return linkWithCredential(credential.user, googleCredential)
 }
 
 export async function linkGoogleAccountWithPassword(user: User, password: string) {
@@ -47,6 +57,8 @@ export function getAuthErrorMessage(error: unknown) {
 
   const messages: Record<string, string> = {
     "auth/invalid-credential": "The email or password is incorrect.",
+    "auth/invalid-login-credentials": "The email or password is incorrect.",
+    "auth/wrong-password": "The email or password is incorrect.",
     "auth/invalid-email": "Enter a valid email address.",
     "auth/email-already-in-use": "An account already uses this email. Sign in with Google first, then add a password to use both sign-in methods.",
     "auth/weak-password": "Choose a stronger password that meets all the requirements.",
@@ -59,7 +71,8 @@ export function getAuthErrorMessage(error: unknown) {
     "auth/popup-closed-by-user": "The Google sign-in window was closed before completing.",
     "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow popups and try again.",
     "auth/operation-not-allowed": "This sign-in method is not enabled for the project.",
+    "auth/requires-recent-login": "For your security, sign in again and retry this change.",
   }
 
-  return messages[code] ?? "Something went wrong. Please try again."
+  return messages[code] ?? (error instanceof Error && !code ? error.message : "Something went wrong. Please try again.")
 }
