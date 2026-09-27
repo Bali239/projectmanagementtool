@@ -4,6 +4,7 @@ import { Alert, Empty, Spin } from "antd"
 import { useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppSelector } from "@/store/hooks"
 import TaskBoard from "./TaskBoard"
 
@@ -11,7 +12,7 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const searchQuery = useAppSelector((state) => state.tasks.searchQuery)
   const { data: tasks = [], isPending, isError, error } = useQuery({
-    queryKey: ["tasks", user?.uid],
+    queryKey: taskQueryKeys.list(user?.uid),
     queryFn: () => fetchTasks(),
     enabled: !!user,
   })

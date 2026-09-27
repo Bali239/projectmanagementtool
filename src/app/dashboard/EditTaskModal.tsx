@@ -6,6 +6,7 @@ import dayjs from "dayjs"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, updateTask } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeTaskEdit, showTaskDetails, type BoardTask } from "@/store/tasksSlice"
 import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
@@ -18,7 +19,7 @@ export default function EditTaskModal() {
   const [form] = Form.useForm<TaskFormValues>()
   const [description, setDescription] = useState("")
   const { data: tasks = [], isError, error } = useQuery({
-    queryKey: ["tasks", user?.uid],
+    queryKey: taskQueryKeys.list(user?.uid),
     queryFn: () => fetchTasks(),
     enabled: !!user && taskView === "edit" && !!activeTaskId,
   })
@@ -38,8 +39,8 @@ export default function EditTaskModal() {
   const mutation = useMutation({
     mutationFn: updateTask,
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<BoardTask[]>(["tasks", user?.uid], (current) => current?.map((item) => item.id === updatedTask.id ? updatedTask : item))
-      queryClient.invalidateQueries({ queryKey: ["tasks", user?.uid] })
+      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.map((item) => item.id === updatedTask.id ? updatedTask : item))
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
       dispatch(showTaskDetails())
     },
   })

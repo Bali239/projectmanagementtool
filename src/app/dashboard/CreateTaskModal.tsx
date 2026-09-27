@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { createTask } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeCreateTask } from "@/store/tasksSlice"
 import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
@@ -27,7 +28,7 @@ export default function CreateTaskModal() {
   const mutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", user?.uid] })
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
       dispatch(closeCreateTask())
     },
   })

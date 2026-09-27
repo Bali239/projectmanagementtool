@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarDays, Clock3, Pencil, Trash2 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, deleteTask } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
 import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeTaskDetails, editTaskDetails, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
@@ -23,7 +24,7 @@ export default function TaskDetailModal() {
   const { user } = useAuth()
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const { data: tasks = [], isPending, isError, error } = useQuery({
-    queryKey: ["tasks", user?.uid],
+    queryKey: taskQueryKeys.list(user?.uid),
     queryFn: () => fetchTasks(),
     enabled: !!user && taskView === "details" && !!activeTaskId,
   })
@@ -32,8 +33,8 @@ export default function TaskDetailModal() {
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: (_result, taskId) => {
-      queryClient.setQueryData<BoardTask[]>(["tasks", user?.uid], (current) => current?.filter((item) => item.id !== taskId))
-      queryClient.invalidateQueries({ queryKey: ["tasks", user?.uid] })
+      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.filter((item) => item.id !== taskId))
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
       dispatch(closeTaskDetails())
     },
   })

@@ -5,6 +5,7 @@ import { Alert } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { updateTask } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppSelector } from "@/store/hooks"
 import type { BoardTask, TaskStatus } from "@/store/tasksSlice"
 import TaskColumn, { boardColumns } from "./TaskColumn"
@@ -15,7 +16,7 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const searchQuery = useAppSelector((state) => state.tasks.searchQuery)
-  const queryKey = ["tasks", user?.uid]
+  const queryKey = taskQueryKeys.list(user?.uid)
   const moveTaskMutation = useMutation({
     mutationFn: updateTask,
     onMutate: async (updatedTask) => {
