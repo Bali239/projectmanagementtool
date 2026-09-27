@@ -1,10 +1,12 @@
 "use client"
 
-import { Alert, Empty, Spin } from "antd"
+import { Alert, Empty } from "antd"
 import { useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
+import { getFriendlyErrorMessage } from "@/lib/friendlyError"
+import LoadingState from "@/components/LoadingState"
 import { useAppSelector } from "@/store/hooks"
 import TaskBoard from "./TaskBoard"
 
@@ -32,8 +34,8 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      {isError ? <Alert type="error" showIcon message="Tasks could not be loaded" description={error.message} /> : null}
-      {isPending ? <div className="flex min-h-72 items-center justify-center"><Spin size="large" /></div> : null}
+      {isError ? <Alert type="error" showIcon message="Tasks could not be loaded" description={getFriendlyErrorMessage(error)} /> : null}
+      {isPending ? <LoadingState message="Loading your board..." /> : null}
       {!isPending && !isError && filteredTasks.length === 0 ? (
         <div className="flex min-h-72 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/70">
           <Empty description={searchQuery ? "No tasks match this search" : "Your board is ready for its first task"} />

@@ -1,12 +1,14 @@
 "use client"
 
 import { Editor } from "@tinymce/tinymce-react"
-import { Alert, Button, Modal, Spin, Tag } from "antd"
+import { Alert, Button, Modal, Tag } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarDays, Clock3, Pencil, Trash2 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, deleteTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
+import { getFriendlyErrorMessage } from "@/lib/friendlyError"
+import LoadingState from "@/components/LoadingState"
 import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeTaskDetails, editTaskDetails, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
@@ -68,7 +70,7 @@ export default function TaskDetailModal() {
       destroyOnHidden
       centered
     >
-      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={error.message} /> : task ? (
+      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
         <div className="space-y-5 py-3">
           <div className="flex flex-wrap gap-2">
             <Tag icon={<Clock3 size={13} />} color="blue">{statusLabels[task.status]}</Tag>
@@ -117,7 +119,7 @@ export default function TaskDetailModal() {
           </section>
           <p className="text-xs text-slate-400">Created {new Date(task.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</p>
         </div>
-      ) : <div className="flex min-h-48 items-center justify-center">{isPending ? <Spin /> : <p className="text-sm text-slate-500">This task is no longer available.</p>}</div>}
+      ) : isPending ? <LoadingState className="min-h-48" message="Loading task details..." /> : <div className="flex min-h-48 items-center justify-center"><p className="text-sm text-slate-500">This task is no longer available.</p></div>}
     </Modal>
   )
 }

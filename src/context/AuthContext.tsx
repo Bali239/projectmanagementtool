@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, type ReactNode } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { authLoading, authUserChanged, type AuthUser } from "@/store/authSlice"
 import { getFirebaseAuth } from "@/lib/firebase/client"
+import LoadingState from "@/components/LoadingState"
 
 type AuthContextValue = {
   user: AuthUser | null
@@ -57,7 +58,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   }, [loading, router, user])
 
   if (loading || !user) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">Loading your workspace...</div>
+    return <LoadingState className="min-h-screen bg-slate-50" message="Loading your workspace..." />
   }
 
   return children

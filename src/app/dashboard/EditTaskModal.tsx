@@ -1,12 +1,14 @@
 "use client"
 
-import { Alert, Button, Form, Modal, Spin } from "antd"
+import { Alert, Button, Form, Modal } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks, updateTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
+import { getFriendlyErrorMessage } from "@/lib/friendlyError"
+import LoadingState from "@/components/LoadingState"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { closeTaskEdit, showTaskDetails, type BoardTask } from "@/store/tasksSlice"
 import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
@@ -69,7 +71,7 @@ export default function EditTaskModal() {
       destroyOnHidden
       centered
     >
-      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={error.message} /> : task ? (
+      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
         <Form form={form} layout="vertical" onFinish={submit} className="pt-5">
           <TaskFormFields form={form} description={description} onDescriptionChange={setDescription} />
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
@@ -78,7 +80,7 @@ export default function EditTaskModal() {
             <Button type="primary" htmlType="submit" loading={mutation.isPending}>Save changes</Button>
           </div>
         </Form>
-      ) : <div className="flex min-h-48 items-center justify-center"><Spin /></div>}
+      ) : <LoadingState className="min-h-48" message="Loading task details..." />}
     </Modal>
   )
 }
