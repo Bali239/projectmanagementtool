@@ -32,10 +32,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       <div aria-hidden="true" className="h-16 shrink-0" />
       <div className="relative flex flex-1 flex-row">
         {sidebarOpen && <>
-          <button type="button" aria-label="Close sidebar" onClick={toggleSidebar} className="absolute inset-0 z-20 bg-slate-900/30 md:hidden" />
+          <button type="button" aria-label="Close sidebar" onClick={toggleSidebar} className="fixed inset-x-0 top-16 bottom-0 z-20 bg-slate-900/30 md:hidden" />
           <Sidebar onNavigate={() => { if (window.innerWidth < 768) toggleSidebar() }} />
         </>}
-        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</main>
+        <main className={`min-w-0 flex-1 px-3 py-4 transition-[margin] sm:px-6 sm:py-6 lg:px-8 ${sidebarOpen ? "md:ml-64" : ""}`}>{children}</main>
       </div>
       {hydrated && <>
         <CreateTaskModal />
