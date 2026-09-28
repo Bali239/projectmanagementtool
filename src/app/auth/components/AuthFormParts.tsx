@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
+import { useFormState, type FieldValues, type Path, type UseFormReturn } from "react-hook-form"
 import { getAuthErrorMessage } from "@/lib/firebase/auth"
 
 export function AuthField<T extends FieldValues>({ label, name, type = "text", placeholder, form }: {
@@ -9,14 +9,15 @@ export function AuthField<T extends FieldValues>({ label, name, type = "text", p
   placeholder: string
   form: UseFormReturn<T>
 }) {
-  const error = form.formState.errors[name as keyof typeof form.formState.errors]?.message
+  const { errors } = useFormState({ control: form.control, name })
+  const error = errors[name as keyof typeof errors]?.message
   const errorId = `${String(name).replace(/\./g, "-")}-error`
 
-  return <label className="block text-sm font-semibold text-slate-700">
-    {label}
+  return <div>
+    <label htmlFor={String(name)} className="block text-sm font-semibold text-slate-700">{label}</label>
     <input {...form.register(name)} id={String(name)} type={type} placeholder={placeholder} aria-invalid={!!error} aria-describedby={error ? errorId : undefined} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-normal text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 aria-[invalid=true]:border-red-400" />
-    {error && <span id={errorId} role="alert" className="mt-1 block text-xs font-normal text-red-600">{String(error)}</span>}
-  </label>
+    {error && <p id={errorId} role="alert" aria-live="polite" className="mt-1 block text-xs font-normal text-red-600">{String(error)}</p>}
+  </div>
 }
 
 export function AuthError({ error, fallback }: { error?: unknown; fallback?: string }) {
