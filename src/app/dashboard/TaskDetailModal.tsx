@@ -71,21 +71,9 @@ export default function TaskDetailModal() {
                         const url = new URL(href, window.location.href)
                         if (url.protocol === "http:" || url.protocol === "https:") {
                           window.open(url.href, "_blank", "noopener,noreferrer")
-                          return
                         }
-                      } catch {
-                        // Treat invalid or unsupported URLs as search text below.
-                      }
+                      } catch {}
                     }
-
-                    const block = target ? editor.dom.getParent(target, "p, li, h1, h2, h3, blockquote, pre") : null
-                    const searchText = editor.selection.getContent({ format: "text" }).trim()
-                      || link?.textContent?.trim()
-                      || block?.textContent?.trim()
-                    if (!searchText) return
-
-                    event.preventDefault()
-                    window.open(`https://www.google.com/search?q=${encodeURIComponent(searchText)}`, "_blank", "noopener,noreferrer")
                   })
                 }}
                 init={{ height: 240, menubar: false, toolbar: false, statusbar: false, branding: false, promotion: false, content_style: "html { overflow-y: auto; } body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.7; color: #334155; padding: 12px 16px; } h1,h2,h3 { color: #0f172a; } ul,ol { padding-left: 1.5rem; }" }}
