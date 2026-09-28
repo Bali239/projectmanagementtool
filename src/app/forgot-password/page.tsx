@@ -1,5 +1,6 @@
 import ForgotPasswordForm from "@/app/auth/components/ForgotPasswordForm"
+import { GuestGuard } from "@/context/AuthContext"
 
 export default function ForgotPasswordPage() {
-  return <ForgotPasswordForm />
+  return <GuestGuard><ForgotPasswordForm /></GuestGuard>
 }

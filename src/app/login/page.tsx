@@ -1,5 +1,6 @@
 import LoginForm from "@/app/auth/components/LoginForm"
+import { GuestGuard } from "@/context/AuthContext"
 
 export default function LoginPage() {
-  return <LoginForm />
+  return <GuestGuard><LoginForm /></GuestGuard>
 }
