@@ -1,15 +1,11 @@
 import {
   createUserWithEmailAndPassword,
-  EmailAuthProvider,
   GoogleAuthProvider,
-  linkWithCredential,
   sendPasswordResetEmail,
   signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
-  type AuthCredential,
-  type User,
 } from "firebase/auth"
 import { getFirebaseAuth } from "./client"
 
@@ -19,21 +15,6 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function loginWithGoogle() {
   return signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider())
-}
-
-export function getGoogleCredentialFromError(error: unknown) {
-  return GoogleAuthProvider.credentialFromError(error as Parameters<typeof GoogleAuthProvider.credentialFromError>[0])
-}
-
-export async function linkGoogleToEmailAccount(email: string, password: string, googleCredential: AuthCredential) {
-  const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password)
-  return linkWithCredential(credential.user, googleCredential)
-}
-
-export async function linkGoogleAccountWithPassword(user: User, password: string) {
-  if (!user.email) throw new Error("This Google account does not have an email address.")
-  const credential = EmailAuthProvider.credential(user.email, password)
-  return linkWithCredential(user, credential)
 }
 
 export async function signupWithEmail(name: string, email: string, password: string) {

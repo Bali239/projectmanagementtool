@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useMutation } from "@tanstack/react-query"
 import { z } from "zod"
@@ -22,7 +21,6 @@ type SignupValues = z.infer<typeof signupSchema>
 
 export default function SignupForm() {
   const router = useRouter()
-  const [googleFlowActive, setGoogleFlowActive] = useState(false)
   const form = useForm<SignupValues>({ resolver: zodResolver(signupSchema), defaultValues: { name: "", email: "", password: "", confirmPassword: "" } })
   const mutation = useMutation({
     mutationFn: (values: SignupValues) => signupWithEmail(values.name, values.email, values.password),
@@ -34,16 +32,16 @@ export default function SignupForm() {
       <AuthBrand />
       <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Create your workspace</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Start organizing work with your team.</p>
-      <GoogleAuthFlow onActiveChange={setGoogleFlowActive} />
-      {!googleFlowActive && <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="mt-4 space-y-4" noValidate>
+      <GoogleAuthFlow />
+      <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="mt-4 space-y-4" noValidate>
         <AuthField label="Name" name="name" placeholder="Alex Morgan" form={form} />
         <AuthField label="Email" name="email" type="email" placeholder="you@company.com" form={form} />
         <AuthField label="Password" name="password" type="password" placeholder="At least 9 characters" form={form} />
         <AuthField label="Confirm password" name="confirmPassword" type="password" placeholder="Repeat your password" form={form} />
         {mutation.error && <AuthError error={mutation.error} />}
         <AuthSubmit loading={mutation.isPending}>Create account</AuthSubmit>
-      </form>}
-      {!googleFlowActive && <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="font-semibold text-emerald-800">Sign in</Link></p>}
+      </form>
+      <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="font-semibold text-emerald-800">Sign in</Link></p>
     </AuthCard>
   </AuthPageLayout>
 }
