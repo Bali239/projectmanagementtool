@@ -22,17 +22,33 @@ export default function TaskColumn({ column, tasks, searchQuery }: TaskColumnPro
   const { ref, isDropTarget } = useDroppable({ id: `column:${column.status}` })
 
   return (
-    <section ref={ref} aria-label={`${column.label} tasks`} className={`flex min-h-72 min-w-0 flex-col rounded-xl border border-slate-200/80 border-t-[3px] bg-slate-100/80 p-3 transition-colors sm:p-4 ${column.tone} ${isDropTarget ? "bg-teal-50 ring-2 ring-inset ring-teal-300" : ""}`}>
-      <header className="mb-3 flex items-center gap-2 rounded-lg bg-white/80 px-2.5 py-2 shadow-sm">
-        <span className={`size-2.5 shrink-0 rounded-full ${column.marker}`} />
-        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{column.label}</h2>
-        <Badge count={tasks.length} color="#64748b" overflowCount={99} />
-        <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} className="shrink-0 text-slate-500 hover:bg-slate-100" onClick={() => dispatch(openCreateTask(column.status))} />
-      </header>
-      <div className="flex flex-col gap-3">
-        {tasks.map((task) => <TaskCard key={task.id} task={task} />)}
-        {tasks.length === 0 && <div className="flex min-h-36 flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300/90 bg-white/40 px-3 text-center text-xs text-slate-400">{searchQuery ? "No matching tasks" : "Drop tasks here"}</div>}
-      </div>
-    </section>
+    <>
+      {/* 1. Ensure the section has a max-height so it knows when to stop growing. 
+       Use h-full if your parent grid has a fixed height, or something like max-h-[80vh] */}
+      <section
+        ref={ref}
+        aria-label={`${column.label} tasks`}
+        className={`flex h-full max-h-[80vh] min-h-72 min-w-0 flex-col rounded-xl border border-slate-200/80 border-t-[3px] bg-slate-100/80 p-3 transition-colors sm:p-4 ${column.tone} ${isDropTarget ? "bg-teal-50 ring-2 ring-inset ring-teal-300" : ""}`}
+      >
+        {/* 2. Add shrink-0 to the header so it doesn't get crushed when the task list gets full */}
+        <header className="mb-3 flex shrink-0 items-center gap-2 rounded-lg bg-white/80 px-2.5 py-2 shadow-sm">
+          <span className={`size-2.5 shrink-0 rounded-full ${column.marker}`} />
+          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{column.label}</h2>
+          <Badge count={tasks.length} color="#64748b" overflowCount={99} />
+          <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} className="shrink-0 text-slate-500 hover:bg-slate-100" onClick={() => dispatch(openCreateTask(column.status))} />
+        </header>
+
+        {/* 3. THE FIX: flex-1 takes remaining space, overflow-y-auto enables scrolling, min-h-0 prevents flexbox stretching */}
+        <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto pr-1 custom-scrollbar">
+          {tasks.map((task) => <TaskCard key={task.id} task={task} />)}
+
+          {tasks.length === 0 && (
+            <div className="flex min-h-36 flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300/90 bg-white/40 px-3 text-center text-xs text-slate-400">
+              {searchQuery ? "No matching tasks" : "Drop tasks here"}
+            </div>
+          )}
+        </div>
+      </section>
+    </>
   )
 }
