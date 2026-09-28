@@ -17,7 +17,7 @@ const allowedListStyles = new Set([
 
 function renderSafeRichText(node: Node, key: string): ReactNode {
   if (node.nodeType === Node.TEXT_NODE) return node.textContent
-  if (!(node instanceof Element)) return null
+  if (!(node instanceof HTMLElement)) return null
 
   const tag = node.tagName.toLowerCase()
   const children = Array.from(node.childNodes).map((child, index) => renderSafeRichText(child, `${key}-${index}`))
