@@ -32,7 +32,7 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
         <Input autoFocus size="large" maxLength={180} placeholder="What needs to happen?" />
       </Form.Item>
       <Form.Item label="Description" className="mb-5">
-        <div className="overflow-hidden rounded-md border border-slate-200">
+        <div className="rounded-md border border-slate-200 bg-white">
           <Editor
             tinymceScriptSrc="/tinymce/tinymce.min.js"
             licenseKey="gpl"
@@ -44,8 +44,11 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
               menubar: false,
               branding: false,
               promotion: false,
-              plugins: "lists link",
-              toolbar: "undo redo | blocks | bold italic underline | bullist numlist | link",
+              plugins: "advlist lists link",
+              toolbar: "undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | link",
+              block_formats: "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Blockquote=blockquote; Preformatted=pre",
+              advlist_bullet_styles: "disc,circle,square",
+              advlist_number_styles: "decimal,lower-alpha,lower-greek,lower-roman,upper-alpha,upper-roman",
               link_default_target: "_blank",
               link_default_protocol: "https",
               content_style: "body { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; color: #334155; padding: 10px 12px; }",

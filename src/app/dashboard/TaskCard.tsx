@@ -11,6 +11,9 @@ import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 const allowedTags = new Set([
   "a", "b", "blockquote", "br", "code", "em", "h1", "h2", "h3", "i", "li", "ol", "p", "pre", "strong", "u", "ul",
 ])
+const allowedListStyles = new Set([
+  "circle", "disc", "square", "decimal", "lower-alpha", "lower-greek", "lower-roman", "upper-alpha", "upper-roman",
+])
 
 function renderSafeRichText(node: Node, key: string): ReactNode {
   if (node.nodeType === Node.TEXT_NODE) return node.textContent
@@ -24,6 +27,18 @@ function renderSafeRichText(node: Node, key: string): ReactNode {
     const href = node.getAttribute("href")?.trim()
     if (!href || !/^https?:\/\//i.test(href)) return children
     return createElement("a", { key, href, target: "_blank", rel: "noopener noreferrer", className: "text-teal-700 underline" }, children)
+  }
+
+  if (tag === "ol" || tag === "ul") {
+    const listStyleType = node.style.listStyleType
+    const style = allowedListStyles.has(listStyleType) ? { listStyleType } : undefined
+    return createElement(tag, { key, style }, children)
+  }
+
+  if (["blockquote", "h1", "h2", "h3", "p"].includes(tag)) {
+    const textAlign = node.style.textAlign
+    const style = ["left", "center", "right", "justify"].includes(textAlign) ? { textAlign: textAlign as "left" | "center" | "right" | "justify" } : undefined
+    return createElement(tag, { key, style }, children)
   }
 
   return createElement(tag, { key }, children)
