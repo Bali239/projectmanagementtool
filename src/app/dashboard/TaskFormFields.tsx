@@ -2,7 +2,7 @@
 
 import { DatePicker, Form, Input, Select, TimePicker, type FormInstance } from "antd"
 import { Editor } from "@tinymce/tinymce-react"
-import type { Dayjs } from "dayjs"
+import dayjs, { type Dayjs } from "dayjs"
 import type { TaskStatus } from "@/store/tasksSlice"
 
 export type TaskFormValues = {
@@ -61,7 +61,7 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
           <Select options={statusOptions} />
         </Form.Item>
         <Form.Item name="dueDate" label="Due date">
-          <DatePicker className="w-full" format="MMM D, YYYY" placeholder="Choose a date" onChange={(value) => { if (!value) form.setFieldValue("dueTime", null) }} />
+          <DatePicker className="w-full" format="MMM D, YYYY" placeholder="Choose a date" disabledDate={(current) => current.isBefore(dayjs(), "day")} onChange={(value) => { if (!value) form.setFieldValue("dueTime", null) }} />
         </Form.Item>
         <Form.Item name="dueTime" label="Due time">
           <TimePicker className="w-full" format="h:mm A" use12Hours disabled={!dueDate} placeholder="Choose a time" />
