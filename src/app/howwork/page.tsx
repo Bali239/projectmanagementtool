@@ -12,6 +12,7 @@ export default function HowWorkPage() {
   return (
     <main className="min-h-screen bg-[#f7faf8] text-slate-950">
       <Navbar />
+      <div aria-hidden="true" className="h-[68px]" />
       <section className="px-5 pb-14 pt-16 sm:px-8 sm:pb-20 sm:pt-20">
         <div className="mx-auto max-w-7xl">
           <div className="landing-reveal max-w-3xl">

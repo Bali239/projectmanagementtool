@@ -14,6 +14,7 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7faf8] text-slate-950">
       <Navbar />
+      <div aria-hidden="true" className="h-[68px]" />
 
       <section className="relative px-5 pb-16 pt-16 sm:px-8 sm:pb-20 sm:pt-20">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.13),transparent_55%),linear-gradient(to_right,rgba(15,118,110,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,118,110,0.035)_1px,transparent_1px)] bg-[size:auto,32px_32px,32px_32px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />

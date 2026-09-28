@@ -9,6 +9,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { getAuthErrorMessage, getGoogleCredentialFromError, linkGoogleAccountWithPassword, linkGoogleToEmailAccount, loginWithEmail, loginWithGoogle, sendPasswordReset, signupWithEmail } from "@/lib/firebase/auth"
 import type { AuthCredential, User } from "firebase/auth"
+import Navbar from "@/app/Navbar"
 
 const emailSchema = z.object({ email: z.string().trim().email("Enter a valid email address.") })
 const passwordSchema = z.string()
@@ -95,7 +96,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const title = isSignup ? "Create your workspace" : isForgot ? "Reset your password" : "Welcome back"
   const subtitle = isSignup ? "Start organizing work with your team." : isForgot ? "We will send a reset link to your email." : "Sign in to continue to your projects."
 
-  if (googleUser) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-5 py-10 text-slate-900"><section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 sm:p-9">
+  if (googleUser) return <><Navbar /><main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-5 pb-10 pt-24 text-slate-900"><section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 sm:p-9">
     <h1 className="text-2xl font-bold">Add a password</h1><p className="mt-2 text-sm leading-6 text-slate-500">Set a password for {googleUser.email}. You can then sign in with either Google or this email and password.</p>
     <form onSubmit={passwordForm.handleSubmit((values) => passwordMutation.mutate(values))} className="mt-6 space-y-4" noValidate>
       <Field label="Password" name="password" type="password" placeholder="At least 9 characters" form={passwordForm} />
@@ -103,11 +104,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {(authError || passwordForm.formState.errors.root) && <ErrorNotice error={authError} fallback={passwordForm.formState.errors.root?.message} />}
       <button type="submit" disabled={isPending} className="h-11 w-full rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">{isPending ? "Please wait..." : "Save password"}</button>
     </form>
-  </section></main>
+  </section></main></>
 
-  return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-5 py-10 text-slate-900"><section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 sm:p-9">
-    <Link href="/" className="text-sm font-bold tracking-tight text-indigo-600">LetsDo</Link>
-    <h1 className="mt-10 text-3xl font-bold tracking-tight">{googleCredential ? "Connect your Google account" : title}</h1>
+  return <><Navbar /><main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-5 pb-10 pt-24 text-slate-900"><section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 sm:p-9">
+    <h1 className="text-3xl font-bold tracking-tight">{googleCredential ? "Connect your Google account" : title}</h1>
     <p className="mt-2 text-sm leading-6 text-slate-500">{googleCredential ? "An account already uses this Google email. Sign in with its password to connect Google and email sign-in." : subtitle}</p>
 
     {!isForgot && !googleCredential && <>
@@ -133,7 +133,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     </form>}
 
     {!googleCredential && <p className="mt-7 text-center text-sm text-slate-500">{isForgot ? <Link href="/login" className="font-semibold text-indigo-600">Back to sign in</Link> : isSignup ? <>Already have an account? <Link href="/login" className="font-semibold text-indigo-600">Sign in</Link></> : <>New to LetsDo? <Link href="/signup" className="font-semibold text-indigo-600">Create an account</Link></>}</p>}
-  </section></main>
+  </section></main></>
 }
 
 function ErrorNotice({ error, fallback }: { error?: unknown; fallback?: string }) {

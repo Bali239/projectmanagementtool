@@ -14,6 +14,7 @@ export default function HowToUsePage() {
   return (
     <main className="min-h-screen bg-[#f7faf8] text-slate-950">
       <Navbar />
+      <div aria-hidden="true" className="h-[68px]" />
       <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20">
         <div className="mx-auto max-w-7xl">
           <div className="landing-reveal grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
