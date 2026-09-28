@@ -1,12 +1,14 @@
 "use client"
 
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { Button } from "antd"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 
 export default function Navbar() {
   const { user, loading } = useAuth()
+  const router = useRouter()
 
   return (
       <header style={{ left: "50%", width: "100vw", maxWidth: "100vw", transform: "translateX(-50%)" }} className="fixed top-0 z-50 overflow-hidden border-b border-white/15 bg-slate-950/85 shadow-lg shadow-black/30 backdrop-blur-xl backdrop-saturate-150">
@@ -24,9 +26,9 @@ export default function Navbar() {
 
         <div className="flex shrink-0 items-center gap-3">
           {user ? (
-            <Button asChild variant="default" className="rounded-full p-5" ><Link href="/dashboard">Open workspace</Link></Button>
+            <Button type="primary" size="large" shape="round" className="px-5" onClick={() => router.push("/dashboard")}>Open workspace</Button>
           ) : (
-            <Button asChild variant="outline" className="rounded-full p-5" disabled={loading}><Link href="/login">Sign in</Link></Button>
+            <Button size="large" shape="round" className="px-5" disabled={loading} onClick={() => router.push("/login")}>Sign in</Button>
           )}
         </div>
       </nav>

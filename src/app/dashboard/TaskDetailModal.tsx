@@ -65,7 +65,7 @@ export default function TaskDetailModal() {
         <div className="flex gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div>
       </div> : null}
       width="min(720px, calc(100vw - 24px))"
-      classNames={{ body: "task-detail-modal-body" }}
+      classNames={{ body: "scrollbar-none" }}
       styles={{ body: { maxHeight: "min(60dvh, 640px)", overflowY: "auto" } }}
       destroyOnHidden
       centered
