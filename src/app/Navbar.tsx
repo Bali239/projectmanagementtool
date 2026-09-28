@@ -1,7 +1,7 @@
 "use client"
 
-import Image from "next/image"
 import { Button } from "antd"
+import { ArrowUpRight, PanelsTopLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
@@ -11,25 +11,32 @@ export default function Navbar() {
   const router = useRouter()
 
   return (
-      <header style={{ left: "50%", width: "100vw", maxWidth: "100vw", transform: "translateX(-50%)" }} className="fixed top-0 z-50 overflow-hidden border-b border-white/15 bg-slate-950/85 shadow-lg shadow-black/30 backdrop-blur-xl backdrop-saturate-150">
-      <nav className="mx-auto flex h-16 w-full items-center gap-3 px-4 sm:px-6">
-        
-        <Link href="/" className="flex shrink-0 items-center rounded-lg transition-opacity hover:opacity-80">
-        <Image alt="logo" src="/icon.svg" width={32} height={32} priority />
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+      <nav aria-label="Main navigation" className="mx-auto flex h-[68px] w-full max-w-7xl items-center gap-4 px-5 sm:px-8">
+        <Link href="/" aria-label="LetsDo home" className="group flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
+          <span className="grid size-9 place-items-center rounded-xl bg-emerald-700 text-white shadow-sm shadow-emerald-900/15 transition-transform duration-200 group-hover:-rotate-3">
+            <PanelsTopLeft size={18} strokeWidth={2.2} />
+          </span>
+          <span className="text-[17px] font-bold text-slate-950">LetsDo</span>
         </Link>
 
-        <div className="hidden min-w-0 flex-1 items-center justify-center gap-6 overflow-x-auto scrollbar-none text-sm font-medium text-slate-300 md:flex">
-         <Link href="/" className="group relative shrink-0 whitespace-nowrap py-2 text-sm font-medium text-zinc-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-white after:transition-transform after:duration-300 hover:after:origin-left hover:after:scale-x-100">Home</Link>
-          <Link href="/dashboard" className="group relative shrink-0 whitespace-nowrap py-2 text-sm font-medium text-zinc-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-white after:transition-transform after:duration-300 hover:after:origin-left hover:after:scale-x-100">Dashboard</Link>
-          
-        </div> 
+        <div className="hidden flex-1 items-center justify-center gap-7 text-sm font-medium text-slate-600 sm:flex">
+          <Link href="/howwork" className="transition-colors hover:text-emerald-800">How it works</Link>
+          <Link href="/howuse" className="transition-colors hover:text-emerald-800">How to use</Link>
+        </div>
 
-        <div className="flex shrink-0 items-center gap-3">
-          {user ? (
-            <Button type="primary" size="large" shape="round" className="px-5" onClick={() => router.push("/dashboard")}>Open workspace</Button>
-          ) : (
-            <Button size="large" shape="round" className="px-5" disabled={loading} onClick={() => router.push("/login")}>Sign in</Button>
-          )}
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+          {!user && !loading && <Link href="/login" className="rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950">Sign in</Link>}
+          <Button
+            type="primary"
+            size="large"
+            shape="round"
+            className="!h-10 !px-4 !text-sm !font-semibold shadow-sm sm:!px-5"
+            disabled={loading}
+            onClick={() => router.push(user ? "/dashboard" : "/signup")}
+          >
+            <span className="inline-flex items-center gap-1.5">{loading ? "Checking account" : user ? "Go to workspace" : "Create account"}<ArrowUpRight size={15} /></span>
+          </Button>
         </div>
       </nav>
     </header>

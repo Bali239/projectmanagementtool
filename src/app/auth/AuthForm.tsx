@@ -106,7 +106,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   </section></main>
 
   return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-5 py-10 text-slate-900"><section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 sm:p-9">
-    <Link href="/" className="text-sm font-bold tracking-tight text-indigo-600">JiraTodo</Link>
+    <Link href="/" className="text-sm font-bold tracking-tight text-indigo-600">LetsDo</Link>
     <h1 className="mt-10 text-3xl font-bold tracking-tight">{googleCredential ? "Connect your Google account" : title}</h1>
     <p className="mt-2 text-sm leading-6 text-slate-500">{googleCredential ? "An account already uses this Google email. Sign in with its password to connect Google and email sign-in." : subtitle}</p>
 
@@ -132,7 +132,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       <button type="submit" disabled={isPending} className="flex h-11 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60">{isPending ? "Please wait..." : isSignup ? "Create account" : isForgot ? "Send reset link" : "Sign in"}</button>
     </form>}
 
-    {!googleCredential && <p className="mt-7 text-center text-sm text-slate-500">{isForgot ? <Link href="/login" className="font-semibold text-indigo-600">Back to sign in</Link> : isSignup ? <>Already have an account? <Link href="/login" className="font-semibold text-indigo-600">Sign in</Link></> : <>New to JiraTodo? <Link href="/signup" className="font-semibold text-indigo-600">Create an account</Link></>}</p>}
+    {!googleCredential && <p className="mt-7 text-center text-sm text-slate-500">{isForgot ? <Link href="/login" className="font-semibold text-indigo-600">Back to sign in</Link> : isSignup ? <>Already have an account? <Link href="/login" className="font-semibold text-indigo-600">Sign in</Link></> : <>New to LetsDo? <Link href="/signup" className="font-semibold text-indigo-600">Create an account</Link></>}</p>}
   </section></main>
 }
 

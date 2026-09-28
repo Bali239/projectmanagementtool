@@ -44,7 +44,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       <Button type="text" aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"} icon={sidebarOpen ? <X size={18} /> : <Menu size={18} />} onClick={onToggleSidebar} />
       <Link href="/dashboard" className="flex shrink-0 items-center gap-2 text-slate-900 no-underline">
         <span className="flex size-8 items-center justify-center rounded-md bg-teal-700 text-white"><LayoutDashboard size={17} /></span>
-        <span className="hidden text-sm font-semibold sm:inline">JiraTodo</span>
+        <span className="hidden text-sm font-semibold sm:inline">LetsDo</span>
       </Link>
       <Input
         value={search}

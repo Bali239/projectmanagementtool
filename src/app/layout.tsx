@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JiraTodo",
-  description: "The Task Mangaer Like Jira",
+  title: "LetsDo — Task Management",
+  description: "Keep tasks, project progress, and due dates clear in one focused workspace.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
