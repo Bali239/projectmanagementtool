@@ -26,7 +26,6 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-          {!user && !loading && <Link href="/login" className="rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950">Sign in</Link>}
           <Button
             type="primary"
             size="large"
@@ -35,7 +34,7 @@ export default function Navbar() {
             disabled={loading}
             onClick={() => router.push(user ? "/dashboard" : "/signup")}
           >
-            <span className="inline-flex items-center gap-1.5">{loading ? "Checking account" : user ? "Go to workspace" : "Create account"}<ArrowUpRight size={15} /></span>
+            <span className="inline-flex items-center gap-1.5">{user ? "Open workspace" : "Create workspace"}<ArrowUpRight size={15} /></span>
           </Button>
         </div>
       </nav>
