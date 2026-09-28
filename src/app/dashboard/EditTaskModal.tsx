@@ -1,11 +1,12 @@
 "use client"
 
-import { Alert, Button, Form, Modal } from "antd"
+import { Alert, App, Button, Form, Modal } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import dayjs from "dayjs"
+import { Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
-import { fetchTasks, updateTask } from "@/lib/api/tasks"
+import { deleteTask, fetchTasks, updateTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
 import { getFriendlyErrorMessage } from "@/lib/friendlyError"
 import LoadingState from "@/components/LoadingState"
@@ -14,6 +15,7 @@ import { closeTaskEdit, showTaskDetails, type BoardTask } from "@/store/tasksSli
 import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
 
 export default function EditTaskModal() {
+  const { modal } = App.useApp()
   const dispatch = useAppDispatch()
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -47,6 +49,27 @@ export default function EditTaskModal() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteTask,
+    onSuccess: (_result, taskId) => {
+      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.filter((item) => item.id !== taskId))
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
+      dispatch(closeTaskEdit())
+    },
+  })
+
+  function confirmDelete() {
+    if (!task) return
+    modal.confirm({
+      title: "Delete this task?",
+      content: `“${task.title}” will be permanently removed.`,
+      okText: "Delete task",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: () => deleteMutation.mutateAsync(task.id),
+    })
+  }
+
   function submit(values: TaskFormValues) {
     if (!task) return
     mutation.mutate({
@@ -75,9 +98,13 @@ export default function EditTaskModal() {
         <Form form={form} layout="vertical" onFinish={submit} className="pt-5">
           <TaskFormFields form={form} description={description} onDescriptionChange={setDescription} />
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <Button onClick={() => dispatch(closeTaskEdit())}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={mutation.isPending}>Save changes</Button>
+          {deleteMutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{deleteMutation.error.message}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+            <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending} disabled={mutation.isPending} onClick={confirmDelete}>Delete task</Button>
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => dispatch(closeTaskEdit())}>Cancel</Button>
+              <Button type="primary" htmlType="submit" loading={mutation.isPending} disabled={deleteMutation.isPending}>Save changes</Button>
+            </div>
           </div>
         </Form>
       ) : <LoadingState className="min-h-48" message="Loading task details..." />}

@@ -2,16 +2,16 @@
 
 import { Editor } from "@tinymce/tinymce-react"
 import { Alert, Button, Modal, Tag } from "antd"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, Clock3, Pencil, Trash2 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { CalendarDays, Clock3, Pencil } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
-import { fetchTasks, deleteTask } from "@/lib/api/tasks"
+import { fetchTasks } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
 import { getFriendlyErrorMessage } from "@/lib/friendlyError"
 import LoadingState from "@/components/LoadingState"
 import { formatTaskDueDate } from "@/lib/formatTaskDueDate"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { closeTaskDetails, editTaskDetails, type BoardTask, type TaskStatus } from "@/store/tasksSlice"
+import { closeTaskDetails, editTaskDetails, type TaskStatus } from "@/store/tasksSlice"
 
 const statusLabels: Record<TaskStatus, string> = {
   todo: "To do",
@@ -22,7 +22,6 @@ const statusLabels: Record<TaskStatus, string> = {
 
 export default function TaskDetailModal() {
   const dispatch = useAppDispatch()
-  const queryClient = useQueryClient()
   const { user } = useAuth()
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const { data: tasks = [], isPending, isError, error } = useQuery({
@@ -32,27 +31,6 @@ export default function TaskDetailModal() {
   })
   const task = tasks.find((item) => item.id === activeTaskId)
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteTask,
-    onSuccess: (_result, taskId) => {
-      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.filter((item) => item.id !== taskId))
-      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
-      dispatch(closeTaskDetails())
-    },
-  })
-
-  function confirmDelete() {
-    if (!task) return
-    Modal.confirm({
-      title: "Delete this task?",
-      content: `“${task.title}” will be permanently removed.`,
-      okText: "Delete task",
-      okButtonProps: { danger: true, loading: deleteMutation.isPending },
-      cancelText: "Cancel",
-      onOk: () => deleteMutation.mutateAsync(task.id),
-    })
-  }
-
   const dueLabel = formatTaskDueDate(task?.dueDate ?? null, task?.dueTime ?? null)
 
   return (
@@ -60,10 +38,7 @@ export default function TaskDetailModal() {
       open={taskView === "details"}
       onCancel={() => dispatch(closeTaskDetails())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Task details</p><h2 className="m-0 wrap-break-word pr-4 text-lg font-semibold text-slate-900">{task?.title || "Task details"}</h2></div>}
-      footer={task ? <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending} onClick={confirmDelete}>Delete</Button>
-        <div className="flex gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div>
-      </div> : null}
+      footer={task ? <div className="flex justify-end gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div> : null}
       width="min(720px, calc(100vw - 24px))"
       classNames={{ body: "scrollbar-none" }}
       styles={{ body: { maxHeight: "min(60dvh, 640px)", overflowY: "auto" } }}

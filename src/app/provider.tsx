@@ -5,7 +5,7 @@ import React from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AuthProvider } from "@/context/AuthContext";
-import { ConfigProvider } from "antd";
+import { App, ConfigProvider } from "antd";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -23,7 +23,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
             <Provider store={store}>
                 <ConfigProvider theme={{ token: { colorPrimary: "#16796f", borderRadius: 8, fontFamily: "var(--font-geist-sans), sans-serif" } }}>
-                    <AuthProvider>{children}</AuthProvider>
+                    <App>
+                        <AuthProvider>{children}</AuthProvider>
+                    </App>
                 </ConfigProvider>
             </Provider>
             <ReactQueryDevtools initialIsOpen={false}/>
