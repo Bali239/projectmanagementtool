@@ -1,8 +1,8 @@
 "use client"
 
 import { useDraggable } from "@dnd-kit/react"
-import { Button } from "antd"
-import { CalendarDays, Eye, GripVertical, Pencil } from "lucide-react"
+import { Button, Dropdown, type MenuProps } from "antd"
+import { CalendarDays, Ellipsis, Eye, GripVertical, Pencil } from "lucide-react"
 import { createElement, useEffect, useState, type ReactNode } from "react"
 import { useAppDispatch } from "@/store/hooks"
 import { openTaskDetails, openTaskEdit, type BoardTask } from "@/store/tasksSlice"
@@ -49,6 +49,10 @@ export default function TaskCard({ task }: { task: BoardTask }) {
   const { ref, handleRef, isDragging } = useDraggable({ id: `task:${task.id}` })
   const dueLabel = formatTaskDueDate(task.dueDate, task.dueTime, "compact")
   const [descriptionContent, setDescriptionContent] = useState<{ nodes: ReactNode[]; text: string }>({ nodes: [], text: "" })
+  const taskActions: MenuProps["items"] = [
+    { key: "view", label: "View task", icon: <Eye size={15} /> },
+    { key: "edit", label: "Edit task", icon: <Pencil size={14} /> },
+  ]
 
   useEffect(() => {
     const document = new DOMParser().parseFromString(task.description, "text/html")
@@ -65,13 +69,15 @@ export default function TaskCard({ task }: { task: BoardTask }) {
       ref={ref}
       className={`group min-w-0 shrink-0 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <h3 className="min-w-0 flex-1 wrap-break-word text-sm font-semibold leading-5 text-slate-800">{task.title}</h3>
-        <div className="-mr-1 -mt-1 flex shrink-0 items-center">
-          <Button type="text" size="small" aria-label={`View ${task.title}`} title="View task" className="text-slate-400 hover:text-teal-700" icon={<Eye size={15} />} onClick={() => dispatch(openTaskDetails(task.id))} />
-          <Button type="text" size="small" aria-label={`Edit ${task.title}`} title="Edit task" className="text-slate-400 hover:text-teal-700" icon={<Pencil size={14} />} onClick={() => dispatch(openTaskEdit(task.id))} />
+      <div className="mb-3 flex min-w-0 flex-col-reverse gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+        <h3 className="min-w-0 w-full wrap-break-word text-sm font-semibold leading-5 text-slate-800">{task.title}</h3>
+        <div className="-mr-1 -mt-1 flex shrink-0 items-center justify-end self-end sm:self-auto">
+          <Button type="text" size="small" aria-label={`View ${task.title}`} title="View task" className="hidden text-slate-400 hover:text-teal-700 sm:inline-flex" icon={<Eye size={15} />} onClick={() => dispatch(openTaskDetails(task.id))} />
+          <Button type="text" size="small" aria-label={`Edit ${task.title}`} title="Edit task" className="hidden text-slate-400 hover:text-teal-700 sm:inline-flex" icon={<Pencil size={14} />} onClick={() => dispatch(openTaskEdit(task.id))} />
+            
           <Button ref={handleRef} type="text" size="small" aria-label={`Drag ${task.title}`} title="Drag task" className="cursor-grab text-slate-400 active:cursor-grabbing" icon={<GripVertical size={16} />} />
         </div>
+        
       </div>
 
       <div className="mb-3 min-w-0">

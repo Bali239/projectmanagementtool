@@ -100,10 +100,12 @@ export default function EditTaskModal() {
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
           {deleteMutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{deleteMutation.error.message}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-            <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending} disabled={mutation.isPending} onClick={confirmDelete}>Delete task</Button>
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => dispatch(closeTaskEdit())}>Cancel</Button>
-              <Button type="primary" htmlType="submit" loading={mutation.isPending} disabled={deleteMutation.isPending}>Save changes</Button>
+            
+            <div className="flex w-full min-w-0 flex-row gap-2 sm:justify-end">
+              <Button className="w-full flex-1" danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending} disabled={mutation.isPending} onClick={confirmDelete}>Delete task</Button>
+              <Button className="w-full flex-1" onClick={() => dispatch(closeTaskEdit())}>Cancel</Button>
+              <Button className="w-full flex-1" type="primary" htmlType="submit" loading={mutation.isPending} disabled={deleteMutation.isPending}>Save changes</Button>
+              
             </div>
           </div>
         </Form>
