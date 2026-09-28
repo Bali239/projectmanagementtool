@@ -44,12 +44,26 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
 
   return (
     <>
-      {moveTaskMutation.isError && <Alert className="mb-4" type="error" showIcon message="Task could not be moved" description={moveTaskMutation.error.message} />}
+      {moveTaskMutation.isError && (
+        <Alert
+          className="mb-4"
+          type="error"
+          showIcon
+          message="Task could not be moved"
+          description={moveTaskMutation.error.message}
+        />
+      )}
       <DragDropProvider onDragEnd={handleDragEnd}>
-        <div className="min-w-0 overflow-x-auto overscroll-x-contain pb-3">
-          <div className="grid min-w-0 w-full grid-cols-2 items-start gap-2 md:min-w-240 md:grid-cols-4 md:gap-4">
+        {/* Removed overflow-x-auto on mobile so it stacks into 2 rows instead of scrolling */}
+        <div className="w-full pb-3">
+          <div className="grid w-full grid-cols-2 gap-2 items-start lg:grid-cols-4 lg:gap-4">
             {boardColumns.map((column) => (
-              <TaskColumn key={column.status} column={column} tasks={tasks.filter((task) => task.status === column.status)} searchQuery={searchQuery} />
+              <TaskColumn
+                key={column.status}
+                column={column}
+                tasks={tasks.filter((task) => task.status === column.status)}
+                searchQuery={searchQuery}
+              />
             ))}
           </div>
         </div>
