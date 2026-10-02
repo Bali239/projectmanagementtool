@@ -1,3 +1,34 @@
+import type { ReactNode } from "react"
+import { useFormState, type FieldValues, type Path, type UseFormReturn } from "react-hook-form"
+
+export function AuthField<T extends FieldValues>({ label, name, type = "text", placeholder, form, autoComplete }: {
+  label: string
+  name: Path<T>
+  type?: string
+  placeholder: string
+  form: UseFormReturn<T>
+  autoComplete?: string
+}) {
+  const { errors } = useFormState({ control: form.control, name })
+  const error = errors[name as keyof typeof errors]?.message
+  const errorId = `${String(name).replace(/\./g, "-")}-error`
+
+  return <div>
+    <label htmlFor={String(name)} className="block text-sm font-semibold text-slate-700">{label}</label>
+    <input {...form.register(name)} id={String(name)} type={type} autoComplete={autoComplete} placeholder={placeholder} aria-invalid={!!error} aria-describedby={error ? errorId : undefined} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-normal text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 aria-invalid:border-red-400" />
+    {error && <p id={errorId} role="alert" className="mt-1 block text-xs font-normal text-red-600">{String(error)}</p>}
+  </div>
+}
+
+export function AuthError({ error, fallback }: { error?: unknown; fallback?: string }) {
+  const message = error instanceof Error ? error.message : fallback
+  return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{message || "Something went wrong. Please try again."}</p>
+}
+
+export function AuthSubmit({ children, loading }: { children: ReactNode; loading: boolean }) {
+  return <button type="submit" disabled={loading} className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-700 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:opacity-60">{loading ? "Please wait..." : children}</button>
+}
+
 export function GoogleIcon() {
   return <svg aria-hidden="true" viewBox="0 0 48 48" className="size-4.5">
     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />

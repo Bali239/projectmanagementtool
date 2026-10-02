@@ -1,0 +1,37 @@
+import { z } from "zod"
+
+const emailSchema = z.string().trim().email("Enter a valid email address.").toLowerCase()
+
+export const passwordSchema = z.string()
+  .min(9, "Use at least 9 characters.")
+  .regex(/[A-Z]/, "Add at least one uppercase letter.")
+  .regex(/[a-z]/, "Add at least one lowercase letter.")
+  .regex(/[0-9]/, "Add at least one number.")
+  .regex(/[^A-Za-z0-9]/, "Add at least one special character.")
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Enter your password."),
+})
+
+export const signupSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name.").max(80, "Name is too long."),
+  email: emailSchema,
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, "Confirm your password."),
+}).refine((values) => values.password === values.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
+})
+
+export const forgotPasswordSchema = z.object({ email: emailSchema })
+
+export const resetPasswordSchema = z.object({
+  email: emailSchema,
+  token: z.string().min(32, "This reset link is invalid."),
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, "Confirm your password."),
+}).refine((values) => values.password === values.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
+})

@@ -8,3 +8,19 @@ export function getCurrentUser() {
 export function logout() {
   return apiRequest<{ message: string }>("/auth/logout", { method: "POST" })
 }
+
+export function signupWithEmail(input: { name: string; email: string; password: string }) {
+  return apiRequest<{ user: AuthUser }>("/auth/signup", { method: "POST", data: input })
+}
+
+export function loginWithEmail(input: { email: string; password: string }) {
+  return apiRequest<{ user: AuthUser }>("/auth/login", { method: "POST", data: input })
+}
+
+export function requestPasswordReset(email: string) {
+  return apiRequest<{ message: string }>("/auth/forgot-password", { method: "POST", data: { email } })
+}
+
+export function resetPassword(input: { email: string; token: string; password: string }) {
+  return apiRequest<{ message: string }>("/auth/reset-password", { method: "POST", data: input })
+}
