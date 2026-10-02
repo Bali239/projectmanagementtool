@@ -8,6 +8,8 @@ const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 })
 
+let refreshPromise: Promise<void> | null = null
+
 type RefreshableRequest = AxiosRequestConfig & { refreshRetried?: boolean }
 
 apiClient.interceptors.response.use(undefined, async (error: AxiosError) => {
@@ -21,7 +23,12 @@ apiClient.interceptors.response.use(undefined, async (error: AxiosError) => {
 
   config.refreshRetried = true
   try {
-    await apiClient.post("/auth/refresh")
+    if (!refreshPromise) {
+      refreshPromise = apiClient.post("/auth/refresh").then(() => undefined).finally(() => {
+        refreshPromise = null
+      })
+    }
+    await refreshPromise
     return await apiClient.request(config)
   } catch {
     return Promise.reject(error)
