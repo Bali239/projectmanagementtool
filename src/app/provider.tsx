@@ -33,4 +33,3 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     )
 }
 
-export const ReduxProdvidor = AppProviders

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, CalendarDays, Eye, GripVertical, Pencil, Plus, Search } from "lucide-react"
+import { ArrowRight, CalendarDays, Eye, GripVertical, Plus, Search } from "lucide-react"
 import Navbar from "../Navbar"
 
 const instructions = [

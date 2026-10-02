@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { ArrowUpRight, Check, PanelsTopLeft } from "lucide-react"
 import Navbar from "@/app/Navbar"
 
-export type AuthMode = "login" | "signup" | "forgot"
+export type AuthMode = "login" | "signup"
 
 const boardColumns = [
   { title: "To do", color: "bg-sky-300", task: "Plan next steps" },
@@ -11,7 +11,7 @@ const boardColumns = [
 ]
 
 export default function AuthPageLayout({ children, mode }: { children: ReactNode; mode: AuthMode }) {
-  const message = mode === "signup" ? "A thoughtful place to get work moving." : mode === "forgot" ? "We will help you get back to your work." : "Your work, with a clear next step."
+  const message = mode === "signup" ? "A thoughtful place to get work moving." : "Your work, with a clear next step."
 
   return <>
     <Navbar />

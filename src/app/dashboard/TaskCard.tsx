@@ -1,8 +1,8 @@
 "use client"
 
 import { useDraggable } from "@dnd-kit/react"
-import { Button, Dropdown, type MenuProps } from "antd"
-import { CalendarDays, Ellipsis, Eye, GripVertical, Pencil } from "lucide-react"
+import { Button } from "antd"
+import { CalendarDays, Eye, GripVertical, Pencil } from "lucide-react"
 import { createElement, useEffect, useState, type ReactNode } from "react"
 import { useAppDispatch } from "@/store/hooks"
 import { openTaskDetails, openTaskEdit, type BoardTask } from "@/store/tasksSlice"
@@ -49,11 +49,6 @@ export default function TaskCard({ task }: { task: BoardTask }) {
   const { ref, handleRef, isDragging } = useDraggable({ id: `task:${task.id}` })
   const dueLabel = formatTaskDueDate(task.dueDate, task.dueTime, "compact")
   const [descriptionContent, setDescriptionContent] = useState<{ nodes: ReactNode[]; text: string }>({ nodes: [], text: "" })
-  const taskActions: MenuProps["items"] = [
-    { key: "view", label: "View task", icon: <Eye size={15} /> },
-    { key: "edit", label: "Edit task", icon: <Pencil size={14} /> },
-  ]
-
   useEffect(() => {
     const document = new DOMParser().parseFromString(task.description, "text/html")
     setDescriptionContent({

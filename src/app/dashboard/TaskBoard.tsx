@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext"
 import { updateTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppSelector } from "@/store/hooks"
-import type { BoardTask, TaskStatus } from "@/store/tasksSlice"
+import type { BoardTask } from "@/store/tasksSlice"
 import TaskColumn, { boardColumns } from "./TaskColumn"
 
 type TaskBoardProps = { tasks: BoardTask[] }
