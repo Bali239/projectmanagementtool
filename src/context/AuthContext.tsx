@@ -1,12 +1,11 @@
 "use client"
 
-import { onAuthStateChanged, type User } from "firebase/auth"
 import { App } from "antd"
 import { useRouter } from "next/navigation"
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { authLoading, authUserChanged, type AuthUser } from "@/store/authSlice"
-import { getFirebaseAuth } from "@/lib/firebase/client"
+import { getCurrentUser } from "@/lib/api/auth"
 import LoadingState from "@/components/LoadingState"
 
 type AuthContextValue = {
@@ -16,15 +15,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-function serializeUser(user: User): AuthUser {
-  return {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
@@ -32,9 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     dispatch(authLoading())
-    return onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
-      dispatch(authUserChanged(nextUser ? serializeUser(nextUser) : null))
-    })
+    getCurrentUser()
+      .then(({ user: currentUser }) => dispatch(authUserChanged(currentUser)))
+      .catch(() => dispatch(authUserChanged(null)))
   }, [dispatch])
 
   return (

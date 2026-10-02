@@ -1,6 +1,5 @@
-import ForgotPasswordForm from "@/app/auth/components/ForgotPasswordForm"
-import { GuestGuard } from "@/context/AuthContext"
+import { redirect } from "next/navigation"
 
 export default function ForgotPasswordPage() {
-  return <GuestGuard><ForgotPasswordForm /></GuestGuard>
+  redirect("/login")
 }

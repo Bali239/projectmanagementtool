@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LayoutDashboard, LogOut, Menu, Plus, Search, X } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
-import { logout } from "@/lib/firebase/auth"
+import { logout } from "@/lib/api/auth"
 import { useAppDispatch } from "@/store/hooks"
+import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
 
 type NavbarProps = {
@@ -22,7 +23,13 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const dispatch = useAppDispatch()
   const { user } = useAuth()
   const [search, setSearch] = useState("")
-  const signOutMutation = useMutation({ mutationFn: logout, onSuccess: () => router.replace("/login") })
+  const signOutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      dispatch(authUserChanged(null))
+      router.replace("/login")
+    },
+  })
 
   useEffect(() => {
     const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 300)

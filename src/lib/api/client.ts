@@ -1,17 +1,11 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios"
-import { getFirebaseAuth } from "@/lib/firebase/client"
+
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "")
 
 const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
-})
-
-apiClient.interceptors.request.use(async (config) => {
-  const user = getFirebaseAuth().currentUser
-  if (!user) throw new Error("You must be signed in to manage tasks.")
-
-  config.headers.Authorization = `Bearer ${await user.getIdToken()}`
-  return config
 })
 
 export async function apiRequest<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -20,7 +14,8 @@ export async function apiRequest<T>(url: string, config?: AxiosRequestConfig): P
     return response.data
   } catch (error) {
     if (error instanceof AxiosError) {
-      const message = (error.response?.data as { error?: string } | undefined)?.error
+      const data = error.response?.data as { error?: string; message?: string } | undefined
+      const message = data?.error || data?.message
       throw new Error(message || error.message || "The task request failed.")
     }
     throw error
