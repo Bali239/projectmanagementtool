@@ -7,6 +7,7 @@ import type { TaskStatus } from "@/store/tasksSlice"
 
 export type TaskFormValues = {
   title: string
+  description: string
   status: TaskStatus
   dueDate: Dayjs | null
   dueTime: Dayjs | null
@@ -19,15 +20,15 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "completed", label: "Completed" },
 ]
 
-export default function TaskFormFields({ form, description, onDescriptionChange }: {
-  form: FormInstance<TaskFormValues>
-  description: string
-  onDescriptionChange: (value: string) => void
-}) {
+export default function TaskFormFields({ form }: { form: FormInstance<TaskFormValues> }) {
   const dueDate = Form.useWatch("dueDate", form)
+  const description = Form.useWatch("description", form) ?? ""
 
   return (
     <>
+      <Form.Item name="description" hidden>
+        <Input />
+      </Form.Item>
       <Form.Item name="title" label="Task title" rules={[{ required: true, whitespace: true, message: "Add a task title" }]}>
         <Input autoFocus size="large" maxLength={180} placeholder="What needs to happen?" />
       </Form.Item>
@@ -38,7 +39,7 @@ export default function TaskFormFields({ form, description, onDescriptionChange 
             licenseKey="gpl"
             value={description}
             readonly={false}
-            onEditorChange={onDescriptionChange}
+            onEditorChange={(value) => form.setFieldValue("description", value)}
             init={{
               height: 230,
               menubar: false,

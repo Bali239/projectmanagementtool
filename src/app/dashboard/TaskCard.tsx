@@ -51,6 +51,8 @@ export default function TaskCard({ task }: { task: BoardTask }) {
   const [descriptionContent, setDescriptionContent] = useState<{ nodes: ReactNode[]; text: string }>({ nodes: [], text: "" })
   useEffect(() => {
     const document = new DOMParser().parseFromString(task.description, "text/html")
+    // DOMParser is browser-only, so parsing and updating the rendered content must stay in this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDescriptionContent({
       nodes: Array.from(document.body.childNodes).map((node, index) => renderSafeRichText(node, `description-${index}`)),
       text: (document.body.textContent ?? "").replace(/[\u00a0\u200B-\u200D\uFEFF]/g, " ").trim(),

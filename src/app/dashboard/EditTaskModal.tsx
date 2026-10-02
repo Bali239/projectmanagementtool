@@ -4,7 +4,7 @@ import { Alert, App, Button, Form, Modal } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { Trash2 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { deleteTask, fetchTasks, updateTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
@@ -21,7 +21,6 @@ export default function EditTaskModal() {
   const { user } = useAuth()
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const [form] = Form.useForm<TaskFormValues>()
-  const [description, setDescription] = useState("")
   const { data: tasks = [], isError, error } = useQuery({
     queryKey: taskQueryKeys.list(user?.uid),
     queryFn: () => fetchTasks(),
@@ -33,11 +32,11 @@ export default function EditTaskModal() {
     if (!task) return
     form.setFieldsValue({
       title: task.title,
+      description: task.description,
       status: task.status,
       dueDate: task.dueDate ? dayjs(task.dueDate) : null,
       dueTime: task.dueTime ? dayjs(`2000-01-01T${task.dueTime}`) : null,
     })
-    setDescription(task.description)
   }, [form, task])
 
   const mutation = useMutation({
@@ -75,7 +74,7 @@ export default function EditTaskModal() {
     mutation.mutate({
       ...task,
       title: values.title.trim(),
-      description,
+      description: values.description,
       status: values.status,
       dueDate: values.dueDate?.format("YYYY-MM-DD") ?? null,
       dueTime: values.dueDate ? values.dueTime?.format("HH:mm") ?? null : null,
@@ -96,7 +95,7 @@ export default function EditTaskModal() {
     >
       {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
         <Form form={form} layout="vertical" onFinish={submit} className="pt-5">
-          <TaskFormFields form={form} description={description} onDescriptionChange={setDescription} />
+          <TaskFormFields form={form} />
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
           {deleteMutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{deleteMutation.error.message}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">

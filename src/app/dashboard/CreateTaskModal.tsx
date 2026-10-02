@@ -2,7 +2,7 @@
 
 import { Button, Form, Modal } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { createTask } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
@@ -16,13 +16,11 @@ export default function CreateTaskModal() {
   const { user } = useAuth()
   const { createDialogOpen, createStatus } = useAppSelector((state) => state.tasks)
   const [form] = Form.useForm<TaskFormValues>()
-  const [description, setDescription] = useState("")
 
   useEffect(() => {
     if (!createDialogOpen) return
     form.resetFields()
-    form.setFieldsValue({ title: "", status: createStatus, dueDate: null, dueTime: null })
-    setDescription("")
+    form.setFieldsValue({ title: "", description: "", status: createStatus, dueDate: null, dueTime: null })
   }, [createDialogOpen, createStatus, form])
 
   const mutation = useMutation({
@@ -36,7 +34,7 @@ export default function CreateTaskModal() {
   function submit(values: TaskFormValues) {
     mutation.mutate({
       title: values.title.trim(),
-      description,
+      description: values.description,
       status: values.status,
       dueDate: values.dueDate?.format("YYYY-MM-DD") ?? null,
       dueTime: values.dueDate ? values.dueTime?.format("HH:mm") ?? null : null,
@@ -56,7 +54,7 @@ export default function CreateTaskModal() {
       centered
     >
       <Form form={form} layout="vertical" onFinish={submit} className="pt-5">
-        <TaskFormFields form={form} description={description} onDescriptionChange={setDescription} />
+        <TaskFormFields form={form} />
         {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}
         <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
           <Button onClick={() => dispatch(closeCreateTask())}>Cancel</Button>
