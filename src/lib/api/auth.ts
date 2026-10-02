@@ -10,7 +10,7 @@ export function logout() {
 }
 
 export function signupWithEmail(input: { name: string; email: string; password: string }) {
-  return apiRequest<{ user: AuthUser }>("/auth/signup", { method: "POST", data: input })
+  return apiRequest<{ message: string }>("/auth/signup", { method: "POST", data: input })
 }
 
 export function loginWithEmail(input: { email: string; password: string }) {
@@ -23,4 +23,12 @@ export function requestPasswordReset(email: string) {
 
 export function resetPassword(input: { email: string; token: string; password: string }) {
   return apiRequest<{ message: string }>("/auth/reset-password", { method: "POST", data: input })
+}
+
+export function verifyEmail(token: string) {
+  return apiRequest<{ message: string }>("/auth/verify-email", { method: "POST", data: { token } })
+}
+
+export function resendVerification(email: string) {
+  return apiRequest<{ message: string }>("/auth/resend-verification", { method: "POST", data: { email } })
 }

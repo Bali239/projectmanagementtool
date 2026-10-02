@@ -3,9 +3,10 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
+import { App } from "antd"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { loginWithEmail } from "@/lib/api/auth"
+import { loginWithEmail, resendVerification } from "@/lib/api/auth"
 import { loginSchema } from "@/lib/validation/auth"
 import { authUserChanged } from "@/store/authSlice"
 import { useAppDispatch } from "@/store/hooks"
@@ -17,6 +18,7 @@ type LoginValues = { email: string; password: string }
 
 export default function LoginForm({ passwordReset = false }: { passwordReset?: boolean }) {
   const router = useRouter()
+  const { message } = App.useApp()
   const dispatch = useAppDispatch()
   const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } })
   const mutation = useMutation({
@@ -26,6 +28,11 @@ export default function LoginForm({ passwordReset = false }: { passwordReset?: b
       router.replace("/dashboard")
     },
   })
+  const resendMutation = useMutation({
+    mutationFn: () => resendVerification(form.getValues("email")),
+    onSuccess: ({ message: responseMessage }) => message.success(responseMessage),
+  })
+  const needsVerification = mutation.error instanceof Error && mutation.error.message.toLowerCase().includes("verify your email")
 
   return <AuthPageLayout mode="login">
     <AuthCard>
@@ -40,6 +47,8 @@ export default function LoginForm({ passwordReset = false }: { passwordReset?: b
         <AuthField label="Password" name="password" type="password" placeholder="Your password" autoComplete="current-password" form={form} />
         <div className="-mt-1 text-right"><Link href="/forgot-password" className="text-xs font-semibold text-emerald-800 hover:text-emerald-950">Forgot password?</Link></div>
         {mutation.error && <AuthError error={mutation.error} />}
+        {needsVerification && <button type="button" disabled={resendMutation.isPending} onClick={() => resendMutation.mutate()} className="w-full text-left text-sm font-semibold text-emerald-800 underline disabled:opacity-60">{resendMutation.isPending ? "Sending verification email..." : "Resend verification email"}</button>}
+        {resendMutation.error && <AuthError error={resendMutation.error} />}
         <AuthSubmit loading={mutation.isPending}>Sign in</AuthSubmit>
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">New to LetsDo? <Link href="/signup" className="font-semibold text-emerald-800">Create an account</Link></p>

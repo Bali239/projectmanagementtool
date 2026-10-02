@@ -8,6 +8,26 @@ const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 })
 
+type RefreshableRequest = AxiosRequestConfig & { refreshRetried?: boolean }
+
+apiClient.interceptors.response.use(undefined, async (error: AxiosError) => {
+  const config = error.config as RefreshableRequest | undefined
+  const url = config?.url || ""
+  const isAuthRequest = ["/auth/login", "/auth/signup", "/auth/refresh", "/auth/verify-email", "/auth/resend-verification"].some((path) => url.includes(path))
+
+  if (error.response?.status !== 401 || !config || config.refreshRetried || isAuthRequest) {
+    return Promise.reject(error)
+  }
+
+  config.refreshRetried = true
+  try {
+    await apiClient.post("/auth/refresh")
+    return await apiClient.request(config)
+  } catch {
+    return Promise.reject(error)
+  }
+})
+
 export async function apiRequest<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
   try {
     const response = await apiClient.request<T>({ ...config, url })

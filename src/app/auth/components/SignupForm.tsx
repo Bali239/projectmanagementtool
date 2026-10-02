@@ -3,12 +3,11 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
+import { App } from "antd"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signupWithEmail } from "@/lib/api/auth"
 import { signupSchema } from "@/lib/validation/auth"
-import { authUserChanged } from "@/store/authSlice"
-import { useAppDispatch } from "@/store/hooks"
 import AuthPageLayout, { AuthCard, AuthBrand } from "./AuthPageLayout"
 import { AuthError, AuthField, AuthSubmit } from "./AuthFormParts"
 import GoogleAuthFlow from "./GoogleAuthFlow"
@@ -17,7 +16,7 @@ type SignupValues = { name: string; email: string; password: string; confirmPass
 
 export default function SignupForm() {
   const router = useRouter()
-  const dispatch = useAppDispatch()
+  const { message } = App.useApp()
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     mode: "onTouched",
@@ -29,9 +28,9 @@ export default function SignupForm() {
       email: values.email,
       password: values.password,
     }),
-    onSuccess: ({ user }) => {
-      dispatch(authUserChanged(user))
-      router.replace("/dashboard")
+    onSuccess: () => {
+      message.success({ content: "Verification email sent. Please verify your email before signing in.", duration: 6 })
+      router.replace("/login")
     },
   })
 
