@@ -15,9 +15,9 @@ export const boardColumns: { status: TaskStatus; label: string; tone: string; ma
 ]
 
 type Column = (typeof boardColumns)[number]
-type TaskColumnProps = { column: Column; tasks: BoardTask[]; searchQuery: string }
+type TaskColumnProps = { column: Column; tasks: BoardTask[]; searchQuery: string; canManage: boolean; canChangeStatus: boolean }
 
-export default function TaskColumn({ column, tasks, searchQuery }: TaskColumnProps) {
+export default function TaskColumn({ column, tasks, searchQuery, canManage, canChangeStatus }: TaskColumnProps) {
   const dispatch = useAppDispatch()
   const { ref, isDropTarget } = useDroppable({ id: `column:${column.status}` })
 
@@ -33,11 +33,11 @@ export default function TaskColumn({ column, tasks, searchQuery }: TaskColumnPro
           <span className={`size-2.5 shrink-0 rounded-full ${column.marker}`} />
           <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{column.label}</h2>
           <Badge count={tasks.length} color="#64748b" overflowCount={99} />
-          <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} className="shrink-0 text-slate-500 hover:bg-slate-100" onClick={() => dispatch(openCreateTask(column.status))} />
+          {canManage && <Button type="text" size="small" aria-label={`Create task in ${column.label}`} icon={<Plus size={15} />} className="shrink-0 text-slate-500 hover:bg-slate-100" onClick={() => dispatch(openCreateTask(column.status))} />}
         </header>
 
         <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto pr-1 custom-scrollbar">
-          {tasks.map((task) => <TaskCard key={task.id} task={task} />)}
+          {tasks.map((task) => <TaskCard key={task.id} task={task} canManage={canManage} canChangeStatus={canChangeStatus} />)}
 
           {tasks.length === 0 && (
             <div className="flex min-h-36 flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300/90 bg-white/40 px-3 text-center text-xs text-slate-400">

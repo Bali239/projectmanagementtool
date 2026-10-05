@@ -22,12 +22,12 @@ const statusLabels: Record<TaskStatus, string> = {
 
 export default function TaskDetailModal() {
   const dispatch = useAppDispatch()
-  const { user } = useAuth()
+  const { workspace } = useAuth()
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const { data: tasks = [], isPending, isError, error } = useQuery({
-    queryKey: taskQueryKeys.list(user?.uid),
+    queryKey: taskQueryKeys.list(workspace?.id),
     queryFn: () => fetchTasks(),
-    enabled: !!user && taskView === "details" && !!activeTaskId,
+    enabled: !!workspace && taskView === "details" && !!activeTaskId,
   })
   const task = tasks.find((item) => item.id === activeTaskId)
 
@@ -38,7 +38,7 @@ export default function TaskDetailModal() {
       open={taskView === "details"}
       onCancel={() => dispatch(closeTaskDetails())}
       title={<div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Task details</p><h2 className="m-0 wrap-break-word pr-4 text-lg font-semibold text-slate-900">{task?.title || "Task details"}</h2></div>}
-      footer={task ? <div className="flex justify-end gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button><Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button></div> : null}
+      footer={task ? <div className="flex justify-end gap-2"><Button onClick={() => dispatch(closeTaskDetails())}>Close</Button>{workspace?.role === "admin" && <Button type="primary" icon={<Pencil size={15} />} onClick={() => dispatch(editTaskDetails())}>Edit task</Button>}</div> : null}
       width="min(720px, calc(100vw - 24px))"
       classNames={{ body: "scrollbar-none" }}
       styles={{ body: { maxHeight: "min(60dvh, 640px)", overflowY: "auto" } }}
@@ -51,6 +51,7 @@ export default function TaskDetailModal() {
             <Tag icon={<Clock3 size={13} />} color="blue">{statusLabels[task.status]}</Tag>
             {dueLabel && <Tag icon={<CalendarDays size={13} />} color="gold">Due {dueLabel}</Tag>}
           </div>
+          {task.assignee && <p className="text-sm text-slate-600">Assigned to <span className="font-medium text-slate-800">{task.assignee.name}</span> <span className="text-slate-400">({task.assignee.email})</span></p>}
           <section>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Description</h3>
             {task.description.trim() ? <div className="overflow-hidden rounded-md border border-slate-200">

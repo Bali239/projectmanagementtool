@@ -44,9 +44,9 @@ function renderSafeRichText(node: Node, key: string): ReactNode {
   return createElement(tag, { key }, children)
 }
 
-export default function TaskCard({ task }: { task: BoardTask }) {
+export default function TaskCard({ task, canManage, canChangeStatus }: { task: BoardTask; canManage: boolean; canChangeStatus: boolean }) {
   const dispatch = useAppDispatch()
-  const { ref, handleRef, isDragging } = useDraggable({ id: `task:${task.id}` })
+  const { ref, handleRef, isDragging } = useDraggable({ id: `task:${task.id}`, disabled: !canChangeStatus })
   const dueLabel = formatTaskDueDate(task.dueDate, task.dueTime, "compact")
   const [descriptionContent, setDescriptionContent] = useState<{ nodes: ReactNode[]; text: string }>({ nodes: [], text: "" })
   useEffect(() => {
@@ -70,9 +70,8 @@ export default function TaskCard({ task }: { task: BoardTask }) {
         <h3 className="min-w-0 w-full wrap-break-word text-sm font-semibold leading-5 text-slate-800">{task.title}</h3>
         <div className="-mr-1 -mt-1 flex shrink-0 items-center justify-end self-end sm:self-auto">
           <Button type="text" size="small" aria-label={`View ${task.title}`} title="View task" className="hidden text-slate-400 hover:text-teal-700 sm:inline-flex" icon={<Eye size={15} />} onClick={() => dispatch(openTaskDetails(task.id))} />
-          <Button type="text" size="small" aria-label={`Edit ${task.title}`} title="Edit task" className="hidden text-slate-400 hover:text-teal-700 sm:inline-flex" icon={<Pencil size={14} />} onClick={() => dispatch(openTaskEdit(task.id))} />
-            
-          <Button ref={handleRef} type="text" size="small" aria-label={`Drag ${task.title}`} title="Drag task" className="cursor-grab text-slate-400 active:cursor-grabbing" icon={<GripVertical size={16} />} />
+          {canManage && <Button type="text" size="small" aria-label={`Edit ${task.title}`} title="Edit task" className="hidden text-slate-400 hover:text-teal-700 sm:inline-flex" icon={<Pencil size={14} />} onClick={() => dispatch(openTaskEdit(task.id))} />}
+          {canChangeStatus && <Button ref={handleRef} type="text" size="small" aria-label={`Drag ${task.title}`} title="Drag task" className="cursor-grab text-slate-400 active:cursor-grabbing" icon={<GripVertical size={16} />} />}
         </div>
         
       </div>
@@ -96,6 +95,10 @@ export default function TaskCard({ task }: { task: BoardTask }) {
             {dueLabel}
           </span>
         )}
+        {task.assignee && <span className="ml-auto inline-flex min-w-0 items-center gap-1.5 text-[11px] text-slate-600" title={`Assigned to ${task.assignee.name}`}>
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[9px] font-semibold text-teal-800">{task.assignee.name.slice(0, 1).toUpperCase()}</span>
+          <span className="max-w-28 truncate">{task.assignee.name}</span>
+        </span>}
       </div>
     </article>
   )

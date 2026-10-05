@@ -9,7 +9,7 @@ export function logout() {
   return apiRequest<{ message: string }>("/auth/logout", { method: "POST" })
 }
 
-export function signupWithEmail(input: { name: string; email: string; password: string }) {
+export function signupWithEmail(input: { name: string; email: string; password: string; inviteToken?: string }) {
   return apiRequest<{ message: string }>("/auth/signup", { method: "POST", data: input })
 }
 
@@ -26,7 +26,7 @@ export function resetPassword(input: { email: string; token: string; password: s
 }
 
 export function verifyEmail(token: string) {
-  return apiRequest<{ message: string }>("/auth/verify-email", { method: "POST", data: { token } })
+  return apiRequest<{ message: string; workspaceJoined?: boolean }>("/auth/verify-email", { method: "POST", data: { token } })
 }
 
 export function resendVerification(email: string) {

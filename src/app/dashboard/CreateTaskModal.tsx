@@ -13,20 +13,20 @@ import TaskFormFields, { type TaskFormValues } from "./TaskFormFields"
 export default function CreateTaskModal() {
   const dispatch = useAppDispatch()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { workspace } = useAuth()
   const { createDialogOpen, createStatus } = useAppSelector((state) => state.tasks)
   const [form] = Form.useForm<TaskFormValues>()
 
   useEffect(() => {
     if (!createDialogOpen) return
     form.resetFields()
-    form.setFieldsValue({ title: "", description: "", status: createStatus, dueDate: null, dueTime: null })
+    form.setFieldsValue({ title: "", description: "", status: createStatus, dueDate: null, dueTime: null, assigneeId: null })
   }, [createDialogOpen, createStatus, form])
 
   const mutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace?.id) })
       dispatch(closeCreateTask())
     },
   })
@@ -38,6 +38,7 @@ export default function CreateTaskModal() {
       status: values.status,
       dueDate: values.dueDate?.format("YYYY-MM-DD") ?? null,
       dueTime: values.dueDate ? values.dueTime?.format("HH:mm") ?? null : null,
+      assigneeId: values.assigneeId ?? null,
     })
   }
 

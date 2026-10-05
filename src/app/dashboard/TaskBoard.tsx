@@ -4,42 +4,45 @@ import { DragDropProvider } from "@dnd-kit/react"
 import { Alert } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
-import { updateTask } from "@/lib/api/tasks"
+import { updateTaskStatus } from "@/lib/api/tasks"
 import { taskQueryKeys } from "@/lib/queryKeys"
 import { useAppSelector } from "@/store/hooks"
 import type { BoardTask } from "@/store/tasksSlice"
 import TaskColumn, { boardColumns } from "./TaskColumn"
 
-type TaskBoardProps = { tasks: BoardTask[] }
+type TaskBoardProps = { tasks: BoardTask[]; canManage: boolean; canChangeStatus: boolean }
 
-export default function TaskBoard({ tasks }: TaskBoardProps) {
+export default function TaskBoard({ tasks, canManage, canChangeStatus }: TaskBoardProps) {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { workspace } = useAuth()
   const searchQuery = useAppSelector((state) => state.tasks.searchQuery)
-  const queryKey = taskQueryKeys.list(user?.uid)
+  const queryKey = taskQueryKeys.list(workspace?.id)
   const moveTaskMutation = useMutation({
-    mutationFn: updateTask,
-    onMutate: async (updatedTask) => {
+    mutationFn: ({ taskId, status }: { taskId: string; status: BoardTask["status"] }) => updateTaskStatus(taskId, status),
+    onMutate: async ({ taskId, status }) => {
       await queryClient.cancelQueries({ queryKey })
       const previousTasks = queryClient.getQueryData<BoardTask[]>(queryKey)
-      queryClient.setQueryData<BoardTask[]>(queryKey, (current) => current?.map((task) => task.id === updatedTask.id ? updatedTask : task))
+      queryClient.setQueryData<BoardTask[]>(queryKey, (current) => current?.map((task) => task.id === taskId ? { ...task, status } : task))
       return { previousTasks }
     },
-    onError: (error, _updatedTask, context) => {
+    onError: (error, _statusUpdate, context) => {
       if (context?.previousTasks) queryClient.setQueryData(queryKey, context.previousTasks)
+    },
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData<BoardTask[]>(queryKey, (current) => current?.map((task) => task.id === updatedTask.id ? updatedTask : task))
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   })
 
   function handleDragEnd(event: { canceled: boolean; operation: { source?: { id: string | number } | null; target?: { id: string | number } | null } }) {
-    if (event.canceled || !event.operation.source || !event.operation.target) return
+    if (!canChangeStatus || event.canceled || !event.operation.source || !event.operation.target) return
     const sourceId = String(event.operation.source.id)
     const targetId = String(event.operation.target.id)
     if (!sourceId.startsWith("task:") || !targetId.startsWith("column:")) return
     const task = tasks.find((item) => item.id === sourceId.slice("task:".length))
     const status = boardColumns.find((column) => `column:${column.status}` === targetId)?.status
     if (!task || !status || task.status === status) return
-    moveTaskMutation.mutate({ ...task, status })
+    moveTaskMutation.mutate({ taskId: task.id, status })
   }
 
   return (
@@ -63,6 +66,8 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
                 column={column}
                 tasks={tasks.filter((task) => task.status === column.status)}
                 searchQuery={searchQuery}
+                canManage={canManage}
+                canChangeStatus={canChangeStatus}
               />
             ))}
           </div>

@@ -11,12 +11,13 @@ import { useAppSelector } from "@/store/hooks"
 import TaskBoard from "./TaskBoard"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, workspace } = useAuth()
   const searchQuery = useAppSelector((state) => state.tasks.searchQuery)
   const { data: tasks = [], isPending, isError, error } = useQuery({
-    queryKey: taskQueryKeys.list(user?.uid),
+    queryKey: taskQueryKeys.list(workspace?.id),
     queryFn: () => fetchTasks(),
-    enabled: !!user,
+    enabled: !!user && !!workspace,
+    refetchInterval: 60_000,
   })
   const filteredTasks = tasks.filter((task) => task.title.toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()))
 
@@ -24,7 +25,7 @@ export default function DashboardPage() {
     <section className="mx-auto flex min-h-full w-full max-w-none flex-col gap-4 sm:gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">Project workspace</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">{workspace?.name}</p>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Task board</h1>
           <p className="mt-1.5 text-sm text-slate-500">Keep work moving, one clear next step at a time.</p>
         </div>
@@ -41,7 +42,7 @@ export default function DashboardPage() {
           <Empty description={searchQuery ? "No tasks match this search" : "Your board is ready for its first task"} />
         </div>
       ) : null}
-      {!isPending && !isError && filteredTasks.length > 0 ? <TaskBoard tasks={filteredTasks} /> : null}
+      {!isPending && !isError && filteredTasks.length > 0 ? <TaskBoard tasks={filteredTasks} canManage={workspace?.role === "admin"} canChangeStatus={!!workspace} /> : null}
     </section>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { Avatar, Button, Dropdown, Input, type MenuProps } from "antd"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -20,12 +20,14 @@ type NavbarProps = {
 
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
-  const { user } = useAuth()
+  const { user, workspace } = useAuth()
   const [search, setSearch] = useState("")
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
+      queryClient.clear()
       dispatch(authUserChanged(null))
       router.replace("/login")
     },
@@ -53,6 +55,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
         <span className="flex size-8 items-center justify-center rounded-md bg-teal-700 text-white"><LayoutDashboard size={17} /></span>
         <span className="hidden text-sm font-semibold sm:inline">LetsDo</span>
       </Link>
+      <span className="hidden max-w-48 truncate border-l border-slate-200 pl-3 text-sm font-medium text-slate-600 md:inline">{workspace?.name}</span>
       <Input
         value={search}
         onChange={(event) => setSearch(event.target.value)}
@@ -62,9 +65,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
         aria-label="Search tasks"
         className="ml-auto min-w-0 max-w-90 flex-1"
       />
-      <Button type="primary" icon={<Plus size={16} />} onClick={onCreateTask} className="shrink-0">
+      {workspace?.role === "admin" && <Button type="primary" icon={<Plus size={16} />} onClick={onCreateTask} className="shrink-0">
         <span className="hidden sm:inline">Create task</span>
-      </Button>
+      </Button>}
       <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={["click"]} placement="bottomRight">
         <button type="button" aria-label="Open profile menu" className="flex size-9 shrink-0 items-center justify-center rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-teal-700">
           <Avatar src={user?.photoURL || undefined} className="bg-teal-700 font-semibold text-white">

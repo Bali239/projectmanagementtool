@@ -6,11 +6,15 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { authLoading, authUserChanged, type AuthUser } from "@/store/authSlice"
 import { getCurrentUser } from "@/lib/api/auth"
+import { getCurrentWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
 import LoadingState from "@/components/LoadingState"
 
 type AuthContextValue = {
   user: AuthUser | null
   loading: boolean
+  workspace: WorkspaceSummary | null
+  workspaceLoading: boolean
+  refreshWorkspace: (userId?: string) => Promise<WorkspaceSummary | null>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -19,6 +23,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
   const status = useAppSelector((state) => state.auth.status)
+  const [workspaceState, setWorkspaceState] = useState<{
+    userId: string | null
+    workspace: WorkspaceSummary | null
+    loading: boolean
+  }>({ userId: null, workspace: null, loading: true })
 
   useEffect(() => {
     dispatch(authLoading())
@@ -27,8 +36,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => dispatch(authUserChanged(null)))
   }, [dispatch])
 
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    getCurrentWorkspace()
+      .then(({ workspace: currentWorkspace }) => {
+        if (active) setWorkspaceState({ userId: user.uid, workspace: currentWorkspace, loading: false })
+      })
+      .catch(() => {
+        if (active) setWorkspaceState({ userId: user.uid, workspace: null, loading: false })
+      })
+
+    return () => { active = false }
+  }, [user])
+
+  const currentUserId = user?.uid ?? null
+  const workspace = workspaceState.userId === currentUserId ? workspaceState.workspace : null
+  const workspaceLoading = currentUserId !== null && (workspaceState.userId !== currentUserId || workspaceState.loading)
+
+  async function refreshWorkspace(userId = user?.uid) {
+    const { workspace: currentWorkspace } = await getCurrentWorkspace()
+    if (userId) setWorkspaceState({ userId, workspace: currentWorkspace, loading: false })
+    return currentWorkspace
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading: status === "loading" }}>
+    <AuthContext.Provider value={{ user, loading: status === "loading", workspace, workspaceLoading, refreshWorkspace }}>
       {children}
     </AuthContext.Provider>
   )

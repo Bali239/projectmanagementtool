@@ -14,7 +14,7 @@ import GoogleAuthFlow from "./GoogleAuthFlow"
 
 type SignupValues = { name: string; email: string; password: string; confirmPassword: string }
 
-export default function SignupForm() {
+export default function SignupForm({ inviteToken }: { inviteToken?: string }) {
   const router = useRouter()
   const { message } = App.useApp()
   const form = useForm<SignupValues>({
@@ -27,10 +27,11 @@ export default function SignupForm() {
       name: values.name,
       email: values.email,
       password: values.password,
+      ...(inviteToken ? { inviteToken } : {}),
     }),
     onSuccess: () => {
       message.success({ content: "Verification email sent. Please verify your email before signing in.", duration: 6 })
-      router.replace("/login")
+      router.replace(inviteToken ? `/login?inviteToken=${encodeURIComponent(inviteToken)}` : "/login")
     },
   })
 
@@ -39,7 +40,7 @@ export default function SignupForm() {
       <AuthBrand />
       <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Create your workspace</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Create your account and start organizing work.</p>
-      <GoogleAuthFlow />
+      <GoogleAuthFlow inviteToken={inviteToken} />
       <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or use email<span className="h-px flex-1 bg-slate-200" /></div>
       <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="space-y-4" noValidate>
         <AuthField label="Name" name="name" placeholder="Alex Morgan" autoComplete="name" form={form} />

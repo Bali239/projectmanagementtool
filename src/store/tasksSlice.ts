@@ -10,6 +10,13 @@ export type BoardTask = {
   status: TaskStatus
   dueDate: string | null
   dueTime: string | null
+    assigneeId: string | null
+  assignee: {
+    id: string
+    name: string
+    email: string
+    picture: string | null
+  } | null
   createdAt: string
 }
 

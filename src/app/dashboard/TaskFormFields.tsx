@@ -1,9 +1,13 @@
 "use client"
 
 import { DatePicker, Form, Input, Select, TimePicker, type FormInstance } from "antd"
+import { useQuery } from "@tanstack/react-query"
 import { Editor } from "@tinymce/tinymce-react"
 import dayjs, { type Dayjs } from "dayjs"
 import type { TaskStatus } from "@/store/tasksSlice"
+import { useAuth } from "@/context/AuthContext"
+import { fetchWorkspaceMembers } from "@/lib/api/workspaces"
+import { workspaceQueryKeys } from "@/lib/queryKeys"
 
 export type TaskFormValues = {
   title: string
@@ -11,6 +15,7 @@ export type TaskFormValues = {
   status: TaskStatus
   dueDate: Dayjs | null
   dueTime: Dayjs | null
+  assigneeId: string | null
 }
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
@@ -21,6 +26,12 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
 ]
 
 export default function TaskFormFields({ form }: { form: FormInstance<TaskFormValues> }) {
+  const { workspace } = useAuth()
+  const { data: members = [] } = useQuery({
+    queryKey: workspaceQueryKeys.members(workspace?.id),
+    queryFn: fetchWorkspaceMembers,
+    enabled: workspace?.role === "admin",
+  })
   const dueDate = Form.useWatch("dueDate", form)
   const description = Form.useWatch("description", form) ?? ""
 
@@ -68,6 +79,14 @@ export default function TaskFormFields({ form }: { form: FormInstance<TaskFormVa
           <TimePicker className="w-full" format="h:mm A" use12Hours disabled={!dueDate} placeholder="Choose a time" />
         </Form.Item>
       </div>
+      <Form.Item name="assigneeId" label="Assign to">
+        <Select
+          allowClear
+          placeholder="Choose a workspace member"
+          options={members.map((member) => ({ value: member.id, label: `${member.name} (${member.email})` }))}
+          onChange={(value: string | undefined) => form.setFieldValue("assigneeId", value ?? null)}
+        />
+      </Form.Item>
     </>
   )
 }

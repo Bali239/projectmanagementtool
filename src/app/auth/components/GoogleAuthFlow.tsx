@@ -4,12 +4,13 @@ import { useState } from "react"
 import { API_BASE_URL } from "@/lib/api/client"
 import { GoogleButton } from "./AuthFormParts"
 
-export default function GoogleAuthFlow() {
+export default function GoogleAuthFlow({ inviteToken }: { inviteToken?: string }) {
   const [loading, setLoading] = useState(false)
 
   function beginGoogleLogin() {
     setLoading(true)
-    window.open(`${API_BASE_URL}/auth/google`, "_self", "noopener,noreferrer")
+    const query = inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ""
+    window.open(`${API_BASE_URL}/auth/google${query}`, "_self", "noopener,noreferrer")
   }
 
   return <div>

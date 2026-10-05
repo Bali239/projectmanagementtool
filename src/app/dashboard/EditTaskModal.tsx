@@ -18,13 +18,13 @@ export default function EditTaskModal() {
   const { modal } = App.useApp()
   const dispatch = useAppDispatch()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { workspace } = useAuth()
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const [form] = Form.useForm<TaskFormValues>()
   const { data: tasks = [], isError, error } = useQuery({
-    queryKey: taskQueryKeys.list(user?.uid),
+    queryKey: taskQueryKeys.list(workspace?.id),
     queryFn: () => fetchTasks(),
-    enabled: !!user && taskView === "edit" && !!activeTaskId,
+    enabled: !!workspace && taskView === "edit" && !!activeTaskId,
   })
   const task = tasks.find((item) => item.id === activeTaskId)
 
@@ -36,14 +36,15 @@ export default function EditTaskModal() {
       status: task.status,
       dueDate: task.dueDate ? dayjs(task.dueDate) : null,
       dueTime: task.dueTime ? dayjs(`2000-01-01T${task.dueTime}`) : null,
+      assigneeId: task.assignee?.id ?? null,
     })
   }, [form, task])
 
   const mutation = useMutation({
     mutationFn: updateTask,
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.map((item) => item.id === updatedTask.id ? updatedTask : item))
-      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
+      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(workspace?.id), (current) => current?.map((item) => item.id === updatedTask.id ? updatedTask : item))
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace?.id) })
       dispatch(showTaskDetails())
     },
   })
@@ -51,8 +52,8 @@ export default function EditTaskModal() {
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: (_result, taskId) => {
-      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(user?.uid), (current) => current?.filter((item) => item.id !== taskId))
-      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(user?.uid) })
+      queryClient.setQueryData<BoardTask[]>(taskQueryKeys.list(workspace?.id), (current) => current?.filter((item) => item.id !== taskId))
+      queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace?.id) })
       dispatch(closeTaskEdit())
     },
   })
@@ -78,6 +79,7 @@ export default function EditTaskModal() {
       status: values.status,
       dueDate: values.dueDate?.format("YYYY-MM-DD") ?? null,
       dueTime: values.dueDate ? values.dueTime?.format("HH:mm") ?? null : null,
+      assigneeId: values.assigneeId ?? null,
     })
   }
 

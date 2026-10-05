@@ -13,9 +13,9 @@ export default function VerifyEmailForm({ token }: { token: string }) {
   const { message } = App.useApp()
   const mutation = useMutation({
     mutationFn: () => verifyEmail(token),
-    onSuccess: () => {
-      message.success("Email verified. You can now sign in.")
-      router.replace("/login")
+    onSuccess: ({ message: responseMessage, workspaceJoined }) => {
+      message.success(responseMessage)
+      router.replace(workspaceJoined ? "/login?workspaceJoined=1" : "/login")
     },
   })
   const invalidToken = token.length !== 64

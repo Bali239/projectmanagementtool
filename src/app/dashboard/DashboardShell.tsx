@@ -10,8 +10,12 @@ import EditTaskModal from "./EditTaskModal"
 import Navbar from "./Navbar"
 import Sidebar from "./Sidebar"
 import TaskDetailModal from "./TaskDetailModal"
+import WorkspaceOnboarding from "./WorkspaceOnboarding"
+import LoadingState from "@/components/LoadingState"
+import { useAuth } from "@/context/AuthContext"
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
+  const { workspace, workspaceLoading } = useAuth()
   const dispatch = useAppDispatch()
   const { sidebarOpen, hydrated } = useAppSelector((state) => state.ui)
 
@@ -19,6 +23,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     const savedPreference = document.cookie.split("; ").find((cookie) => cookie.startsWith(`${SIDEBAR_PREFERENCE_KEY}=`))?.split("=")[1]
     dispatch(sidebarStateHydrated(savedPreference !== "false"))
   }, [dispatch])
+
+  if (workspaceLoading) return <LoadingState className="min-h-screen bg-slate-50" message="Loading your workspace..." />
+  if (!workspace) return <WorkspaceOnboarding />
 
   function toggleSidebar() {
     const nextOpen = !sidebarOpen
@@ -38,9 +45,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <main className={`min-w-0 flex-1 px-3 py-4 transition-[margin] sm:px-6 sm:py-6 lg:px-8 ${sidebarOpen ? "md:ml-64" : ""}`}>{children}</main>
       </div>
       {hydrated && <>
-        <CreateTaskModal />
         <TaskDetailModal />
-        <EditTaskModal />
+        {workspace?.role === "admin" && <>
+          <CreateTaskModal />
+          <EditTaskModal />
+        </>}
       </>}
     </div>
   )

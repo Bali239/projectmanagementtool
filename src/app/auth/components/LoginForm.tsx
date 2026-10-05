@@ -7,24 +7,38 @@ import { App } from "antd"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginWithEmail, resendVerification } from "@/lib/api/auth"
+import { acceptWorkspaceInvitation } from "@/lib/api/workspaces"
 import { loginSchema } from "@/lib/validation/auth"
 import { authUserChanged } from "@/store/authSlice"
 import { useAppDispatch } from "@/store/hooks"
+import { useAuth } from "@/context/AuthContext"
 import AuthPageLayout, { AuthCard, AuthBrand } from "./AuthPageLayout"
 import { AuthError, AuthField, AuthSubmit } from "./AuthFormParts"
 import GoogleAuthFlow from "./GoogleAuthFlow"
 
 type LoginValues = { email: string; password: string }
 
-export default function LoginForm({ passwordReset = false }: { passwordReset?: boolean }) {
+export default function LoginForm({ passwordReset = false, inviteToken, workspaceJoined = false }: { passwordReset?: boolean; inviteToken?: string; workspaceJoined?: boolean }) {
   const router = useRouter()
   const { message } = App.useApp()
   const dispatch = useAppDispatch()
+  const { refreshWorkspace } = useAuth()
   const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } })
   const mutation = useMutation({
     mutationFn: loginWithEmail,
-    onSuccess: ({ user }) => {
+    onSuccess: async ({ user }) => {
+      if (!inviteToken) {
+        dispatch(authUserChanged(user))
+        router.replace("/dashboard")
+        return
+      }
+      try {
+        await acceptWorkspaceInvitation(inviteToken)
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : "Invitation could not be accepted.")
+      }
       dispatch(authUserChanged(user))
+      await refreshWorkspace(user.uid).catch(() => null)
       router.replace("/dashboard")
     },
   })
@@ -40,7 +54,7 @@ export default function LoginForm({ passwordReset = false }: { passwordReset?: b
       <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Welcome back</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to continue to your workspace.</p>
       {passwordReset && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Password updated. Sign in with your new password.</p>}
-      <GoogleAuthFlow />
+      <GoogleAuthFlow inviteToken={inviteToken} />
       <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or use email<span className="h-px flex-1 bg-slate-200" /></div>
       <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="space-y-4" noValidate>
         <AuthField label="Email" name="email" type="email" placeholder="you@company.com" autoComplete="email" form={form} />
@@ -51,7 +65,8 @@ export default function LoginForm({ passwordReset = false }: { passwordReset?: b
         {resendMutation.error && <AuthError error={resendMutation.error} />}
         <AuthSubmit loading={mutation.isPending}>Sign in</AuthSubmit>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">New to LetsDo? <Link href="/signup" className="font-semibold text-emerald-800">Create an account</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-500">New to LetsDo? <Link href={inviteToken ? `/signup?inviteToken=${encodeURIComponent(inviteToken)}` : "/signup"} className="font-semibold text-emerald-800">Create an account</Link></p>
+      {workspaceJoined && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Email verified and workspace invitation accepted. Sign in to continue.</p>}
     </AuthCard>
   </AuthPageLayout>
 }

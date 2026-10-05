@@ -7,6 +7,7 @@ type TaskInput = {
   status: TaskStatus
   dueDate: string | null
   dueTime: string | null
+  assigneeId: string | null
 }
 
 export function fetchTasks(titleQuery = "") {
@@ -19,8 +20,15 @@ export function createTask(input: TaskInput) {
 }
 
 export function updateTask(task: BoardTask) {
-  const input: TaskInput = { title: task.title, description: task.description, status: task.status, dueDate: task.dueDate, dueTime: task.dueTime }
+  const input: TaskInput = { title: task.title, description: task.description, status: task.status, dueDate: task.dueDate, dueTime: task.dueTime, assigneeId: task.assigneeId }
   return apiRequest<BoardTask>(`/tasks/${task.id}`, { method: "PATCH", data: input })
+}
+
+export function updateTaskStatus(taskId: string, status: TaskStatus) {
+  return apiRequest<BoardTask>(`/tasks/${taskId}/status`, {
+    method: "PATCH",
+    data: { status },
+  })
 }
 
 export function deleteTask(taskId: string) {
