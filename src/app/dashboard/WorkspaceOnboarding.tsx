@@ -51,6 +51,9 @@ export default function WorkspaceOnboarding({ onCreated, onCancel }: WorkspaceOn
           <Form.Item name="name" label="Workspace name" rules={[{ required: true, whitespace: true, min: 2, max: 100 }]}>
             <Input size="large" autoComplete="organization" placeholder="e.g. Product team" maxLength={100} />
           </Form.Item>
+          <Form.Item name="timezone" label="Workspace timezone" rules={[{ required: true }]}>
+            <Input size="large" placeholder="America/New_York" />
+          </Form.Item>
           
           <div className="mb-5 flex items-center gap-4">
             <Avatar shape="square" size={56} src={previewUrl || undefined} className="shrink-0 bg-teal-50 text-teal-800">
