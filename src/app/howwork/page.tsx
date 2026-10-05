@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Bell, CalendarClock, Check, ClipboardList, Layers3, MoveRight, UsersRound } from "lucide-react"
 import Navbar from "../Navbar"
+import PublicFooter from "../Footer"
 
 const steps = [
   { number: "01", icon: Layers3, title: "Start in a workspace", body: "Sign in, then choose one of your workspaces or create one. Each workspace has its own team, task board, and timezone." },
@@ -17,7 +18,8 @@ const statuses = [
 
 export default function HowWorkPage() {
   return (
-    <main className="min-h-screen bg-[#f7faf8] text-slate-950">
+    <div className="flex min-h-dvh flex-col">
+    <main className="flex-1 bg-[#f7faf8] text-slate-950">
       <Navbar />
       <div aria-hidden="true" className="h-[68px]" />
       <section className="relative isolate overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
@@ -60,5 +62,7 @@ export default function HowWorkPage() {
         </div>
       </section>
     </main>
+    <PublicFooter />
+    </div>
   )
 }

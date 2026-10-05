@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowRight, CalendarDays, Check, ClipboardList, Eye, MoveRight } from "lucide-react"
 import dashboardPreview from "./frontdashboard.png"
 import Navbar from "./Navbar"
+import PublicFooter from "./Footer"
 
 const benefits = [
   { icon: ClipboardList, title: "Keep every task together", text: "Add a clear title, useful notes, and the details your team needs to act." },
@@ -12,7 +13,8 @@ const benefits = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7faf8] text-slate-950">
+    <div className="flex min-h-dvh flex-col">
+    <main className="flex-1 overflow-hidden bg-[#f7faf8] text-slate-950">
       <Navbar />
       <div aria-hidden="true" className="h-[68px]" />
 
@@ -70,10 +72,8 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-7 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <p><span className="font-semibold text-slate-700">LetsDo</span> <span className="mx-1 text-slate-300">/</span> A little more clarity for the work that matters.</p>
-        <p>Made for focused, organized work.</p>
-      </footer>
     </main>
+    <PublicFooter />
+    </div>
   )
 }

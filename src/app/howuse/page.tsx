@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowDown, ArrowRight, CalendarDays, Check, ClipboardList, Eye, FileText, GripVertical, Plus, Search, ShieldCheck, UsersRound } from "lucide-react"
 import Navbar from "../Navbar"
+import PublicFooter from "../Footer"
 
 const instructions = [
   { number: "01", icon: Plus, title: "Create a task (admins)", description: "Choose Create task in the header or the plus button on a status column. The column button starts the new task in that status. Add a title; a description is optional." },
@@ -12,7 +13,8 @@ const instructions = [
 
 export default function HowToUsePage() {
   return (
-    <main className="min-h-screen bg-[#f7faf8] text-slate-950">
+    <div className="flex min-h-dvh flex-col">
+    <main className="flex-1 bg-[#f7faf8] text-slate-950">
       <Navbar />
       <div aria-hidden="true" className="h-[68px]" />
       <section className="relative isolate overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
@@ -58,5 +60,7 @@ export default function HowToUsePage() {
         </div>
       </section>
     </main>
+    <PublicFooter />
+    </div>
   )
 }
