@@ -2,21 +2,20 @@
 
 import { Button, Form, Input } from "antd"
 import { useMutation } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/context/AuthContext"
-import { createWorkspace } from "@/lib/api/workspaces"
+import { createWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
 
 type WorkspaceFormValues = { name: string; timezone: string }
+type WorkspaceOnboardingProps = {
+  onCreated: (workspace: WorkspaceSummary) => void | Promise<void>
+  onCancel: () => void
+}
 
-export default function WorkspaceOnboarding() {
-  const router = useRouter()
-  const { refreshWorkspace } = useAuth()
+export default function WorkspaceOnboarding({ onCreated, onCancel }: WorkspaceOnboardingProps) {
   const [form] = Form.useForm<WorkspaceFormValues>()
   const mutation = useMutation({
     mutationFn: createWorkspace,
-    onSuccess: async () => {
-      await refreshWorkspace()
-      router.replace("/dashboard")
+    onSuccess: async ({ workspace }) => {
+      await onCreated(workspace)
     },
   })
 
@@ -25,10 +24,9 @@ export default function WorkspaceOnboarding() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-[#f4f7f5] px-4 py-10">
-      <section className="w-full max-w-xl border-l-4 border-teal-700 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
+    <section>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">LetsDo workspace</p>
-        <h1 className="mt-3 text-2xl font-semibold text-slate-900">Create your workspace</h1>
+        <h2 className="mt-3 text-2xl font-semibold text-slate-900">Create your workspace</h2>
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">Set up your team space. You’ll be its admin and can invite people from the Team page.</p>
         <Form
           form={form}
@@ -44,11 +42,13 @@ export default function WorkspaceOnboarding() {
             <Input size="large" placeholder="America/New_York" />
           </Form.Item>
           {mutation.error && <p role="alert" className="mb-4 text-sm text-red-700">{mutation.error.message}</p>}
-          <Button type="primary" htmlType="submit" size="large" loading={mutation.isPending}>
-            Create workspace
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="primary" htmlType="submit" size="large" loading={mutation.isPending}>
+              Create workspace
+            </Button>
+            <Button size="large" onClick={onCancel} disabled={mutation.isPending}>Cancel</Button>
+          </div>
         </Form>
-      </section>
-    </main>
+    </section>
   )
 }

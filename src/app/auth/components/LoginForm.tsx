@@ -11,7 +11,6 @@ import { acceptWorkspaceInvitation } from "@/lib/api/workspaces"
 import { loginSchema } from "@/lib/validation/auth"
 import { authUserChanged } from "@/store/authSlice"
 import { useAppDispatch } from "@/store/hooks"
-import { useAuth } from "@/context/AuthContext"
 import AuthPageLayout, { AuthCard, AuthBrand } from "./AuthPageLayout"
 import { AuthError, AuthField, AuthSubmit } from "./AuthFormParts"
 import GoogleAuthFlow from "./GoogleAuthFlow"
@@ -22,14 +21,13 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
   const router = useRouter()
   const { message } = App.useApp()
   const dispatch = useAppDispatch()
-  const { refreshWorkspace } = useAuth()
   const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } })
   const mutation = useMutation({
     mutationFn: loginWithEmail,
     onSuccess: async ({ user }) => {
       if (!inviteToken) {
         dispatch(authUserChanged(user))
-        router.replace("/dashboard")
+        router.replace("/workspaces")
         return
       }
       try {
@@ -38,8 +36,7 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
         message.error(error instanceof Error ? error.message : "Invitation could not be accepted.")
       }
       dispatch(authUserChanged(user))
-      await refreshWorkspace(user.uid).catch(() => null)
-      router.replace("/dashboard")
+      router.replace("/workspaces")
     },
   })
   const resendMutation = useMutation({

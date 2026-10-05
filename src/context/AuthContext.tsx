@@ -6,15 +6,20 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { authLoading, authUserChanged, type AuthUser } from "@/store/authSlice"
 import { getCurrentUser } from "@/lib/api/auth"
-import { getCurrentWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
+import { listUserWorkspaces, type WorkspaceLimits, type WorkspaceSummary } from "@/lib/api/workspaces"
+import { ACTIVE_WORKSPACE_STORAGE_KEY } from "@/lib/api/client"
 import LoadingState from "@/components/LoadingState"
 
 type AuthContextValue = {
   user: AuthUser | null
   loading: boolean
+  workspaces: WorkspaceSummary[]
   workspace: WorkspaceSummary | null
+  workspaceLimits: WorkspaceLimits | null
   workspaceLoading: boolean
-  refreshWorkspace: (userId?: string) => Promise<WorkspaceSummary | null>
+  workspaceError: string | null
+  refreshWorkspaces: (userId?: string) => Promise<void>
+  selectWorkspace: (workspaceId: string | null) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -25,9 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const status = useAppSelector((state) => state.auth.status)
   const [workspaceState, setWorkspaceState] = useState<{
     userId: string | null
-    workspace: WorkspaceSummary | null
+    workspaces: WorkspaceSummary[]
+    limits: WorkspaceLimits | null
     loading: boolean
-  }>({ userId: null, workspace: null, loading: true })
+    error: string | null
+  }>({ userId: null, workspaces: [], limits: null, loading: true, error: null })
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null)
 
   useEffect(() => {
     dispatch(authLoading())
@@ -37,31 +45,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch])
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      window.sessionStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY)
+      setActiveWorkspaceId(null)
+      setWorkspaceState({ userId: null, workspaces: [], limits: null, loading: false, error: null })
+      return
+    }
     let active = true
-    getCurrentWorkspace()
-      .then(({ workspace: currentWorkspace }) => {
-        if (active) setWorkspaceState({ userId: user.uid, workspace: currentWorkspace, loading: false })
+    listUserWorkspaces()
+      .then((result) => {
+        if (!active) return
+        const savedWorkspaceId = window.sessionStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY)
+        const selectedWorkspaceId = result.workspaces.some(({ id }) => id === savedWorkspaceId) ? savedWorkspaceId : null
+        setActiveWorkspaceId(selectedWorkspaceId)
+        setWorkspaceState({ userId: user.uid, workspaces: result.workspaces, limits: result.limits, loading: false, error: null })
       })
-      .catch(() => {
-        if (active) setWorkspaceState({ userId: user.uid, workspace: null, loading: false })
+      .catch((error: unknown) => {
+        if (active) setWorkspaceState({
+          userId: user.uid,
+          workspaces: [],
+          limits: null,
+          loading: false,
+          error: error instanceof Error ? error.message : "Workspaces could not be loaded.",
+        })
       })
 
     return () => { active = false }
   }, [user])
 
   const currentUserId = user?.uid ?? null
-  const workspace = workspaceState.userId === currentUserId ? workspaceState.workspace : null
+  const workspaces = workspaceState.userId === currentUserId ? workspaceState.workspaces : []
+  const workspace = workspaces.find(({ id }) => id === activeWorkspaceId) || null
   const workspaceLoading = currentUserId !== null && (workspaceState.userId !== currentUserId || workspaceState.loading)
 
-  async function refreshWorkspace(userId = user?.uid) {
-    const { workspace: currentWorkspace } = await getCurrentWorkspace()
-    if (userId) setWorkspaceState({ userId, workspace: currentWorkspace, loading: false })
-    return currentWorkspace
+  async function refreshWorkspaces(userId = user?.uid) {
+    const result = await listUserWorkspaces()
+    if (userId) setWorkspaceState({ userId, workspaces: result.workspaces, limits: result.limits, loading: false, error: null })
+  }
+
+  function selectWorkspace(workspaceId: string | null) {
+    if (workspaceId) window.sessionStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, workspaceId)
+    else window.sessionStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY)
+    setActiveWorkspaceId(workspaceId)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading: status === "loading", workspace, workspaceLoading, refreshWorkspace }}>
+    <AuthContext.Provider value={{
+      user,
+      loading: status === "loading",
+      workspaces,
+      workspace,
+      workspaceLimits: workspaceState.userId === currentUserId ? workspaceState.limits : null,
+      workspaceLoading,
+      workspaceError: workspaceState.userId === currentUserId ? workspaceState.error : null,
+      refreshWorkspaces,
+      selectWorkspace,
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -104,7 +143,7 @@ export function GuestGuard({ children }: { children: ReactNode }) {
         dispatch(authUserChanged(currentUser))
         if (currentUser) {
           message.info({ content: "You are already logged in.", key: "already-logged-in" })
-          router.replace("/dashboard")
+          router.replace("/workspaces")
         }
       })
       .catch(() => {

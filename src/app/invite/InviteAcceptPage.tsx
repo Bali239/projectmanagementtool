@@ -10,7 +10,7 @@ import { acceptWorkspaceInvitation, previewWorkspaceInvitation } from "@/lib/api
 
 export default function InviteAcceptPage({ token }: { token: string }) {
   const router = useRouter()
-  const { user, loading, workspace, workspaceLoading, refreshWorkspace } = useAuth()
+  const { user, loading, workspaceLoading, refreshWorkspaces } = useAuth()
   const previewQuery = useQuery({
     queryKey: ["workspace", "invitation-preview", token],
     queryFn: () => previewWorkspaceInvitation(token),
@@ -20,8 +20,8 @@ export default function InviteAcceptPage({ token }: { token: string }) {
   const acceptMutation = useMutation({
     mutationFn: () => acceptWorkspaceInvitation(token),
     onSuccess: async () => {
-      await refreshWorkspace()
-      router.replace("/dashboard")
+      await refreshWorkspaces()
+      router.replace("/workspaces")
     },
   })
 
@@ -37,15 +37,14 @@ export default function InviteAcceptPage({ token }: { token: string }) {
         {invitation ? <>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Join {invitation.workspaceName}</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">Invitation sent to <span className="font-medium text-slate-800">{invitation.email}</span>.</p>
-          {workspace ? <Alert className="mt-6" type="warning" showIcon message={`You already belong to ${workspace.name}.`} description="This account can only belong to one workspace at a time." /> : null}
           {acceptMutation.error && <Alert className="mt-4" type="error" showIcon message={acceptMutation.error.message} />}
           <div className="mt-7 flex flex-wrap gap-3">
-            {user && !workspace ? <Button type="primary" size="large" loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()}>Accept invitation</Button> : null}
+            {user && <Button type="primary" size="large" loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()}>Accept invitation</Button>}
             {!user && <>
               <Link href={`/login?inviteToken=${encodeURIComponent(token)}`}><Button type="primary" size="large">Sign in to join</Button></Link>
               <Link href={`/signup?inviteToken=${encodeURIComponent(token)}`}><Button size="large">Create account</Button></Link>
             </>}
-            {workspace && <Link href="/dashboard"><Button size="large">Open workspace</Button></Link>}
+            {user && <Link href="/workspaces"><Button size="large">Choose workspace</Button></Link>}
           </div>
         </> : <>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Invitation unavailable</h1>

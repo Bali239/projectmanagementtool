@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { openCreateTask } from "@/store/tasksSlice"
 import { SIDEBAR_PREFERENCE_KEY, setSidebarOpen, sidebarStateHydrated } from "@/store/uiSlice"
@@ -10,11 +11,11 @@ import EditTaskModal from "./EditTaskModal"
 import Navbar from "./Navbar"
 import Sidebar from "./Sidebar"
 import TaskDetailModal from "./TaskDetailModal"
-import WorkspaceOnboarding from "./WorkspaceOnboarding"
 import LoadingState from "@/components/LoadingState"
 import { useAuth } from "@/context/AuthContext"
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const { workspace, workspaceLoading } = useAuth()
   const dispatch = useAppDispatch()
   const { sidebarOpen, hydrated } = useAppSelector((state) => state.ui)
@@ -24,8 +25,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     dispatch(sidebarStateHydrated(savedPreference !== "false"))
   }, [dispatch])
 
-  if (workspaceLoading) return <LoadingState className="min-h-screen bg-slate-50" message="Loading your workspace..." />
-  if (!workspace) return <WorkspaceOnboarding />
+  useEffect(() => {
+    if (!workspaceLoading && !workspace) router.replace("/workspaces")
+  }, [router, workspace, workspaceLoading])
+
+  if (workspaceLoading || !workspace) return <LoadingState className="min-h-screen bg-slate-50" message="Loading your workspace..." />
 
   function toggleSidebar() {
     const nextOpen = !sidebarOpen

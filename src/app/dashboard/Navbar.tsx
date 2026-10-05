@@ -5,9 +5,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LayoutDashboard, LogOut, Menu, Plus, Search, X } from "lucide-react"
+import { Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
+import EditWorkspaceModal from "./EditWorkspaceModal"
 import { useAppDispatch } from "@/store/hooks"
 import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
@@ -22,8 +23,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const router = useRouter()
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
-  const { user, workspace } = useAuth()
+  const { user, workspace, workspaces, refreshWorkspaces, selectWorkspace } = useAuth()
   const [search, setSearch] = useState("")
+  const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false)
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
@@ -43,9 +45,37 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     { type: "divider" },
     { key: "signout", label: signOutMutation.isPending ? "Signing out..." : "Sign out", icon: <LogOut size={15} />, disabled: signOutMutation.isPending, danger: true },
   ]
+  const workspaceItems: MenuProps["items"] = [
+    ...workspaces.map((item) => ({
+      key: `workspace:${item.id}`,
+      label: <div className="flex max-w-56 items-center justify-between gap-4"><span className="truncate">{item.name}</span><span className="text-xs capitalize text-slate-500">{item.role}</span></div>,
+      icon: workspace?.id === item.id ? <Check size={15} /> : <Building2 size={15} />,
+    })),
+    ...(workspace?.isCreator ? [
+      { type: "divider" as const },
+      { key: "edit-workspace", label: "Edit workspace", icon: <Pencil size={15} /> },
+    ] : []),
+    { type: "divider" },
+    { key: "all-workspaces", label: "All workspaces" },
+  ]
 
   function handleMenuClick({ key }: { key: string }) {
     if (key === "signout") signOutMutation.mutate()
+  }
+
+  function handleWorkspaceMenuClick({ key }: { key: string }) {
+    if (key === "edit-workspace") {
+      setEditWorkspaceOpen(true)
+      return
+    }
+    if (key === "all-workspaces") {
+      router.push("/workspaces")
+      return
+    }
+    if (!key.startsWith("workspace:")) return
+    selectWorkspace(key.slice("workspace:".length))
+    void queryClient.invalidateQueries()
+    router.replace("/dashboard")
   }
 
   return (
@@ -55,7 +85,15 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
         <span className="flex size-8 items-center justify-center rounded-md bg-teal-700 text-white"><LayoutDashboard size={17} /></span>
         <span className="hidden text-sm font-semibold sm:inline">LetsDo</span>
       </Link>
-      <span className="hidden max-w-48 truncate border-l border-slate-200 pl-3 text-sm font-medium text-slate-600 md:inline">{workspace?.name}</span>
+      <Dropdown menu={{ items: workspaceItems, onClick: handleWorkspaceMenuClick }} trigger={["click"]}>
+        <button type="button" aria-label={`Switch workspace. Current workspace: ${workspace?.name || "none"}`} className="inline-flex min-w-0 max-w-44 items-center gap-1.5 border-l border-slate-200 pl-2 text-sm font-medium text-slate-600 sm:pl-3">
+          <Avatar src={workspace?.photoUrl || undefined} shape="square" size={22} className="shrink-0 bg-teal-50 text-teal-800">
+            <Building2 size={13} />
+          </Avatar>
+          <span className="hidden truncate sm:inline">{workspace?.name || "Choose workspace"}</span>
+          <ChevronDown size={14} className="shrink-0" />
+        </button>
+      </Dropdown>
       <Input
         value={search}
         onChange={(event) => setSearch(event.target.value)}
@@ -75,6 +113,15 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
           </Avatar>
         </button>
       </Dropdown>
+      {workspace && <EditWorkspaceModal
+        open={editWorkspaceOpen}
+        workspace={workspace}
+        onCancel={() => setEditWorkspaceOpen(false)}
+        onSaved={async () => {
+          await refreshWorkspaces()
+          await queryClient.invalidateQueries()
+        }}
+      />}
     </header>
   )
 }

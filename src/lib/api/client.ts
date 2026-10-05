@@ -8,6 +8,16 @@ const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 })
 
+export const ACTIVE_WORKSPACE_STORAGE_KEY = "letsdo.activeWorkspaceId"
+
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const workspaceId = window.sessionStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY)
+    if (workspaceId) config.headers.set("X-Workspace-Id", workspaceId)
+  }
+  return config
+})
+
 let refreshPromise: Promise<void> | null = null
 
 type RefreshableRequest = AxiosRequestConfig & { refreshRetried?: boolean }
