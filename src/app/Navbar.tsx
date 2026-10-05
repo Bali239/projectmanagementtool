@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "antd"
-import { ArrowUpRight, PanelsTopLeft } from "lucide-react"
+import { ArrowUpRight, PanelsTopLeft, FileSpreadsheet  } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
@@ -22,7 +22,7 @@ export default function Navbar() {
 
         <div className="hidden flex-1 items-center justify-center gap-7 text-sm font-medium text-slate-600 sm:flex">
           <Link href="/" className="transition-colors hover:text-emerald-800">Home</Link>
-          <Link href="/howwork" className="transition-colors hover:text-emerald-800">How to use</Link>
+          <Link href="/howwork" className="transition-colors hover:text-emerald-800">How it Works</Link>
           <Link href="/howuse" className="transition-colors hover:text-emerald-800">How to use</Link>
         </div>
 
