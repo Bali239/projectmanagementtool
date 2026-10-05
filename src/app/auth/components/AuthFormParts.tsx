@@ -37,7 +37,7 @@ export function AuthError({ error, fallback }: { error?: unknown; fallback?: str
 
 export function AuthSubmit({ children, loading }: { children: ReactNode; loading: boolean }) {
   // Expose pending state to assistive technology and prevent duplicate submissions.
-  return <button type="submit" disabled={loading} aria-busy={loading} className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-700 text-sm font-semibold text-white shadow-sm transition duration-150 hover:-translate-y-px hover:bg-emerald-800 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70 disabled:shadow-none motion-reduce:transform-none">{loading ? "Please wait..." : children}</button>
+  return <button type="submit" disabled={loading} aria-busy={loading} className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-700 text-sm font-semibold text-white shadow-sm transition duration-150 hover:-translate-y-px hover:bg-emerald-800 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70 disabled:shadow-none motion-reduce:transform-none cursor-pointer">{loading ? "Please wait..." : children}</button>
 }
 
 export function GoogleIcon() {

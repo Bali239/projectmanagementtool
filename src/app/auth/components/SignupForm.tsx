@@ -50,7 +50,7 @@ export default function SignupForm({ inviteToken }: { inviteToken?: string }) {
         {mutation.error && <AuthError error={mutation.error} />}
         <AuthSubmit loading={mutation.isPending}>Create account</AuthSubmit>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="rounded-sm font-semibold text-emerald-800 transition-colors hover:text-emerald-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Sign in</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link href="/login" className="rounded-sm font-semibold text-emerald-800 transition-colors hover:text-emerald-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 cursor-pointer">Sign in</Link></p>
     </AuthCard>
   </AuthPageLayout>
 }
