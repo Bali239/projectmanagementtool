@@ -4,11 +4,11 @@ import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Alert, Avatar, Button, Empty, Modal, Popconfirm } from "antd"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Building2, LogOut, Pencil, Plus, Trash2 } from "lucide-react"
+import { Building2, LogOut, Pencil, Plus, Trash2, DoorOpen } from "lucide-react"
 import LoadingState from "@/components/LoadingState"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
-import { deleteWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
+import { deleteWorkspace, leaveWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
 import { authUserChanged } from "@/store/authSlice"
 import { useAppDispatch } from "@/store/hooks"
 import WorkspaceOnboarding from "@/app/dashboard/WorkspaceOnboarding"
@@ -40,6 +40,14 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
     mutationFn: deleteWorkspace,
     onSuccess: async (_, deletedWorkspaceId) => {
       if (workspace?.id === deletedWorkspaceId) selectWorkspace(null)
+      await queryClient.invalidateQueries()
+      await refreshWorkspaces()
+    },
+  })
+  const leaveMutation = useMutation({
+    mutationFn: (workspaceId: string) => leaveWorkspace(workspaceId),
+    onSuccess: async (_, leftWorkspaceId) => {
+      if (workspace?.id === leftWorkspaceId) selectWorkspace(null)
       await queryClient.invalidateQueries()
       await refreshWorkspaces()
     },
@@ -112,6 +120,7 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
           {capacityMessage && <Alert className="mt-4" type="info" showIcon title={capacityMessage} />}
           {inviteError && inviteMessages[inviteError] && <Alert className="mt-4" type={inviteError === "limit" ? "warning" : "info"} showIcon title={inviteMessages[inviteError]} />}
           {deleteMutation.error && <Alert className="mt-4" type="error" showIcon title={deleteMutation.error.message} />}
+          {leaveMutation.error && <Alert className="mt-4" type="error" showIcon title={leaveMutation.error.message} />}
           {workspaceError && <Alert
             className="mt-4"
             type="error"
@@ -121,14 +130,29 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
             action={<Button size="small" onClick={() => { void refreshWorkspaces().catch(() => null) }}>Retry</Button>}
           />}
 
-          {workspaces.length ? <ul className="mt-7 divide-y divide-slate-200 border-y border-slate-200">
-            {workspaces.map((workspace) => <li key={workspace.id} className="flex flex-wrap items-center justify-between gap-4 py-4 sm:py-5">
+          {workspaces.length ? <ul className="mt-7 space-y-3">
+            {workspaces.map((workspace) => <li key={workspace.id} className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm transition-colors hover:border-teal-300 hover:bg-teal-50/30 sm:px-5 sm:py-5">
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar shape="square" size={42} src={workspace.photoUrl || undefined} className="shrink-0 bg-teal-50 font-semibold text-teal-800">
-                  {workspace.name.slice(0, 1).toUpperCase()}
-                </Avatar>
+                <button
+                  type="button"
+                  aria-label={`Open ${workspace.name} workspace`}
+                  onClick={() => { void openWorkspace(workspace) }}
+                  className="shrink-0 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                >
+                  <Avatar shape="square" size={48} src={workspace.photoUrl || undefined} className="bg-teal-50 font-semibold text-teal-800">
+                    {workspace.name.slice(0, 1).toUpperCase()}
+                  </Avatar>
+                </button>
                 <div className="min-w-0">
-                  <h2 className="truncate text-base font-semibold text-slate-900">{workspace.name}</h2>
+                  <h2 className="truncate text-base font-semibold text-slate-900">
+                    <button
+                      type="button"
+                      onClick={() => { void openWorkspace(workspace) }}
+                      className="max-w-full cursor-pointer truncate rounded-sm text-left hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                    >
+                      {workspace.name}
+                    </button>
+                  </h2>
                   <p className="mt-1 text-sm capitalize text-slate-500">{workspace.role}</p>
                 </div>
               </div>
@@ -146,9 +170,16 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
                     <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending}>Delete</Button>
                   </Popconfirm>
                 </>}
-                <Button icon={<ArrowRight size={15} />} iconPlacement="end" onClick={() => { void openWorkspace(workspace) }}>
-                  Open workspace
-                </Button>
+                {workspace.role === "member" && <Popconfirm
+                  title="Leave this workspace?"
+                  description="You will lose access to its tasks. Tasks assigned to you will become unassigned."
+                  okText="Leave workspace"
+                  okButtonProps={{ danger: true, loading: leaveMutation.isPending }}
+                  cancelButtonProps={{ disabled: leaveMutation.isPending }}
+                  onConfirm={() => leaveMutation.mutate(workspace.id)}
+                >
+                  <Button danger icon={<DoorOpen size={15} />} loading={leaveMutation.isPending}>Leave</Button>
+                </Popconfirm>}
               </div>
             </li>)}
           </ul> : !workspaceError ? <div className="mt-12 border-y border-slate-200 py-12">

@@ -87,6 +87,10 @@ export function removeWorkspaceMember(userId: string) {
   return apiRequest<void>(`/workspaces/members/${userId}`, { method: "DELETE" })
 }
 
+export function leaveWorkspace(workspaceId: string) {
+  return apiRequest<void>("/workspaces/members/me", { method: "DELETE", headers: { "X-Workspace-Id": workspaceId } })
+}
+
 export function fetchWorkspaceInvitations() {
   return apiRequest<WorkspaceInvitation[]>("/workspaces/invitations")
 }
