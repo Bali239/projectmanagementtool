@@ -16,6 +16,7 @@ export default function ForgotPasswordForm() {
   const [submitted, setSubmitted] = useState(false)
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onTouched",
     defaultValues: { email: "" },
   })
   const mutation = useMutation({
@@ -34,7 +35,7 @@ export default function ForgotPasswordForm() {
         {submitted && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">If an account exists for that email, a reset link will be sent.</p>}
         <AuthSubmit loading={mutation.isPending}>Send reset link</AuthSubmit>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500"><Link href="/login" className="font-semibold text-emerald-800">Back to sign in</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-500"><Link href="/login" className="rounded-sm font-semibold text-emerald-800 transition-colors hover:text-emerald-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Back to sign in</Link></p>
     </AuthCard>
   </AuthPageLayout>
 }

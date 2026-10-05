@@ -21,7 +21,7 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
   const router = useRouter()
   const { message } = App.useApp()
   const dispatch = useAppDispatch()
-  const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } })
+  const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), mode: "onTouched", defaultValues: { email: "", password: "" } })
   const mutation = useMutation({
     mutationFn: loginWithEmail,
     onSuccess: async ({ user }) => {
@@ -52,7 +52,7 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
       <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to continue to your workspace.</p>
       {passwordReset && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Password updated. Sign in with your new password.</p>}
       <GoogleAuthFlow inviteToken={inviteToken} />
-      <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or use email<span className="h-px flex-1 bg-slate-200" /></div>
+      <div className="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or use email<span className="h-px flex-1 bg-slate-200" /></div>
       <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="space-y-4" noValidate>
         <AuthField label="Email" name="email" type="email" placeholder="you@company.com" autoComplete="email" form={form} />
         <AuthField label="Password" name="password" type="password" placeholder="Your password" autoComplete="current-password" form={form} />
@@ -62,7 +62,7 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
         {resendMutation.error && <AuthError error={resendMutation.error} />}
         <AuthSubmit loading={mutation.isPending}>Sign in</AuthSubmit>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">New to LetsDo? <Link href={inviteToken ? `/signup?inviteToken=${encodeURIComponent(inviteToken)}` : "/signup"} className="font-semibold text-emerald-800">Create an account</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-500">New to LetsDo? <Link href={inviteToken ? `/signup?inviteToken=${encodeURIComponent(inviteToken)}` : "/signup"} className="rounded-sm font-semibold text-emerald-800 transition-colors hover:text-emerald-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Create an account</Link></p>
       {workspaceJoined && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Email verified and workspace invitation accepted. Sign in to continue.</p>}
     </AuthCard>
   </AuthPageLayout>
