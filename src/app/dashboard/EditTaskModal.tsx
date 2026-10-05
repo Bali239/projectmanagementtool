@@ -95,7 +95,7 @@ export default function EditTaskModal() {
       destroyOnHidden
       centered
     >
-      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
+      {isError ? <Alert type="error" showIcon title="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
         <Form form={form} layout="vertical" onFinish={submit} className="pt-5">
           <TaskFormFields form={form} />
           {mutation.isError && <p role="alert" className="mb-3 text-sm text-red-600">{mutation.error.message}</p>}

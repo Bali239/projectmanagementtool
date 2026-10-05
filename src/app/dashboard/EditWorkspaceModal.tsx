@@ -20,7 +20,7 @@ export default function EditWorkspaceModal({ open, workspace, onCancel, onSaved 
   const [photo, setPhoto] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState(workspace.photoUrl)
   const mutation = useMutation({
-    mutationFn: updateWorkspace,
+    mutationFn: (input: { name?: string; photo?: File }) => updateWorkspace(workspace.id, input),
     onSuccess: async () => {
       onCancel()
       await onSaved()
@@ -66,7 +66,7 @@ export default function EditWorkspaceModal({ open, workspace, onCancel, onSaved 
             <span className="mt-1 block text-xs font-normal text-slate-500">JPEG, PNG, WebP, or GIF; up to 5 MB.</span>
           </label>
         </div>
-        {mutation.error && <Alert className="mb-4" type="error" showIcon message={mutation.error.message} />}
+        {mutation.error && <Alert className="mb-4" type="error" showIcon title={mutation.error.message} />}
         <div className="flex justify-end gap-2">
           <Button onClick={onCancel} disabled={mutation.isPending}>Cancel</Button>
           <Button type="primary" htmlType="submit" icon={<ImagePlus size={15} />} loading={mutation.isPending}>Save changes</Button>

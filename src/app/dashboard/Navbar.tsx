@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, Button, Dropdown, Input, type MenuProps } from "antd"
+import { App, Avatar, Button, Dropdown, Input, type MenuProps } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -20,6 +20,7 @@ type NavbarProps = {
 }
 
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
+  const { modal } = App.useApp()
   const router = useRouter()
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
@@ -60,7 +61,16 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   ]
 
   function handleMenuClick({ key }: { key: string }) {
-    if (key === "signout") signOutMutation.mutate()
+    if (key === "signout") {
+      modal.confirm({
+        title: "Are you sure you want to sign out?",
+        content: "You will need to sign in again to access your workspaces.",
+        okText: "Sign out",
+        okButtonProps: { danger: true },
+        cancelText: "Cancel",
+        onOk: () => signOutMutation.mutateAsync(),
+      })
+    }
   }
 
   function handleWorkspaceMenuClick({ key }: { key: string }) {

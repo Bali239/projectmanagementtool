@@ -89,8 +89,8 @@ export default function TeamPage() {
         </Tag>
       </header>
 
-      {mutationError && <Alert type="error" showIcon message={mutationError.message} />}
-      {membersQuery.isError && <Alert type="error" showIcon message="Team could not be loaded" description={membersQuery.error.message} />}
+      {mutationError && <Alert type="error" showIcon title={mutationError.message} />}
+      {membersQuery.isError && <Alert type="error" showIcon title="Team could not be loaded" description={membersQuery.error.message} />}
 
       <section aria-labelledby="members-heading" className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
@@ -146,7 +146,7 @@ export default function TeamPage() {
           <h2 id="pending-heading" className="text-base font-semibold text-slate-900">Pending invitations</h2>
           <span className="text-sm tabular-nums text-slate-500">{invitationsQuery.data?.length ?? 0}</span>
         </div>
-        {invitationsQuery.isError && <Alert type="error" showIcon message="Invitations could not be loaded" description={invitationsQuery.error.message} />}
+        {invitationsQuery.isError && <Alert type="error" showIcon title="Invitations could not be loaded" description={invitationsQuery.error.message} />}
         {invitationsQuery.data?.length ? <ul className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
           {invitationsQuery.data.map((invitation) => <li key={invitation.id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
             <Avatar className="shrink-0 bg-slate-200 text-slate-600">{invitation.email.slice(0, 1).toUpperCase()}</Avatar>

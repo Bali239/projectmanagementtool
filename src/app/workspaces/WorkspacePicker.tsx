@@ -2,16 +2,17 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Alert, Avatar, Button, Empty, Modal } from "antd"
+import { Alert, Avatar, Button, Empty, Modal, Popconfirm } from "antd"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Building2, LogOut, Plus } from "lucide-react"
+import { ArrowRight, Building2, LogOut, Pencil, Plus, Trash2 } from "lucide-react"
 import LoadingState from "@/components/LoadingState"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
-import type { WorkspaceSummary } from "@/lib/api/workspaces"
+import { deleteWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
 import { authUserChanged } from "@/store/authSlice"
 import { useAppDispatch } from "@/store/hooks"
 import WorkspaceOnboarding from "@/app/dashboard/WorkspaceOnboarding"
+import EditWorkspaceModal from "@/app/dashboard/EditWorkspaceModal"
 
 const inviteMessages: Record<string, string> = {
   invalid: "This invitation could not be accepted. Your workspaces are listed below.",
@@ -23,8 +24,9 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
   const router = useRouter()
   const dispatch = useAppDispatch()
   const queryClient = useQueryClient()
-  const { user, workspaces, workspaceLimits, workspaceLoading, workspaceError, refreshWorkspaces, selectWorkspace } = useAuth()
+  const { user, workspace, workspaces, workspaceLimits, workspaceLoading, workspaceError, refreshWorkspaces, selectWorkspace } = useAuth()
   const [createOpen, setCreateOpen] = useState(false)
+  const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceSummary | null>(null)
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
@@ -32,6 +34,14 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
       selectWorkspace(null)
       dispatch(authUserChanged(null))
       router.replace("/login")
+    },
+  })
+  const deleteMutation = useMutation({
+    mutationFn: deleteWorkspace,
+    onSuccess: async (_, deletedWorkspaceId) => {
+      if (workspace?.id === deletedWorkspaceId) selectWorkspace(null)
+      await queryClient.invalidateQueries()
+      await refreshWorkspaces()
     },
   })
 
@@ -69,14 +79,18 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
           </div>
           <div className="flex min-w-0 items-center gap-3">
             <span className="hidden max-w-56 truncate text-sm text-slate-600 sm:block">{user?.displayName || user?.email}</span>
-            <Button
-              aria-label="Sign out"
-              icon={<LogOut size={16} />}
-              loading={signOutMutation.isPending}
-              onClick={() => signOutMutation.mutate()}
+            <Popconfirm
+              title="Are you sure you want to sign out?"
+              description="You will need to sign in again to access your workspaces."
+              okText="Sign out"
+              okButtonProps={{ danger: true, loading: signOutMutation.isPending }}
+              cancelButtonProps={{ disabled: signOutMutation.isPending }}
+              onConfirm={() => signOutMutation.mutateAsync()}
             >
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
+              <Button aria-label="Sign out" icon={<LogOut size={16} />} loading={signOutMutation.isPending}>
+                <span className="hidden sm:inline">Sign out</span>
+              </Button>
+            </Popconfirm>
           </div>
         </header>
 
@@ -95,8 +109,9 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
           {workspaceLimits && <p className="mt-5 text-sm text-slate-500">
             Created {workspaceLimits.createdCount} of {workspaceLimits.createdLimit} · Member of {workspaceLimits.membershipCount} of {workspaceLimits.membershipLimit}
           </p>}
-          {capacityMessage && <Alert className="mt-4" type="info" showIcon message={capacityMessage} />}
-          {inviteError && inviteMessages[inviteError] && <Alert className="mt-4" type={inviteError === "limit" ? "warning" : "info"} showIcon message={inviteMessages[inviteError]} />}
+          {capacityMessage && <Alert className="mt-4" type="info" showIcon title={capacityMessage} />}
+          {inviteError && inviteMessages[inviteError] && <Alert className="mt-4" type={inviteError === "limit" ? "warning" : "info"} showIcon title={inviteMessages[inviteError]} />}
+          {deleteMutation.error && <Alert className="mt-4" type="error" showIcon title={deleteMutation.error.message} />}
           {workspaceError && <Alert
             className="mt-4"
             type="error"
@@ -117,9 +132,24 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
                   <p className="mt-1 text-sm capitalize text-slate-500">{workspace.role}</p>
                 </div>
               </div>
-              <Button icon={<ArrowRight size={15} />} iconPlacement="end" onClick={() => { void openWorkspace(workspace) }}>
-                Open workspace
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {workspace.isCreator && <>
+                  <Button icon={<Pencil size={15} />} onClick={() => setEditingWorkspace(workspace)}>Edit</Button>
+                  <Popconfirm
+                    title="Delete this workspace?"
+                    description="All tasks, invitations, and memberships in this workspace will be permanently deleted."
+                    okText="Delete workspace"
+                    okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
+                    cancelButtonProps={{ disabled: deleteMutation.isPending }}
+                    onConfirm={() => deleteMutation.mutate(workspace.id)}
+                  >
+                    <Button danger icon={<Trash2 size={15} />} loading={deleteMutation.isPending}>Delete</Button>
+                  </Popconfirm>
+                </>}
+                <Button icon={<ArrowRight size={15} />} iconPlacement="end" onClick={() => { void openWorkspace(workspace) }}>
+                  Open workspace
+                </Button>
+              </div>
             </li>)}
           </ul> : !workspaceError ? <div className="mt-12 border-y border-slate-200 py-12">
             <Empty description="You do not belong to a workspace yet" />
@@ -130,6 +160,15 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
       <Modal open={createOpen} footer={null} onCancel={() => setCreateOpen(false)} destroyOnHidden>
         <WorkspaceOnboarding onCreated={handleWorkspaceCreated} onCancel={() => setCreateOpen(false)} />
       </Modal>
+      {editingWorkspace && <EditWorkspaceModal
+        open
+        workspace={editingWorkspace}
+        onCancel={() => setEditingWorkspace(null)}
+        onSaved={async () => {
+          await refreshWorkspaces()
+          await queryClient.invalidateQueries()
+        }}
+      />}
     </main>
   )
 }

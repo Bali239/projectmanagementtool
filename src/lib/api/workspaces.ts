@@ -52,19 +52,31 @@ export function listUserWorkspaces() {
   return apiRequest<UserWorkspaceList>("/workspaces")
 }
 
-export function createWorkspace(input: { name: string; timezone: string }) {
-  return apiRequest<{ workspace: WorkspaceSummary }>("/workspaces", { method: "POST", data: input })
+export function createWorkspace(input: { name: string; timezone: string; photo?: File }) {
+  const formData = new FormData()
+  formData.append("name", input.name)
+  formData.append("timezone", input.timezone)
+  if (input.photo) formData.append("photo", input.photo)
+  return apiRequest<{ workspace: WorkspaceSummary }>("/workspaces", {
+    method: "POST",
+    data: formData,
+    headers: { "Content-Type": "multipart/form-data" },
+  })
 }
 
-export function updateWorkspace(input: { name?: string; photo?: File }) {
+export function updateWorkspace(workspaceId: string, input: { name?: string; photo?: File }) {
   const formData = new FormData()
   if (input.name !== undefined) formData.append("name", input.name)
   if (input.photo) formData.append("photo", input.photo)
-  return apiRequest<{ workspace: WorkspaceSummary }>("/workspaces/current", {
+  return apiRequest<{ workspace: WorkspaceSummary }>(`/workspaces/${workspaceId}`, {
     method: "PATCH",
     data: formData,
     headers: { "Content-Type": "multipart/form-data" },
   })
+}
+
+export function deleteWorkspace(workspaceId: string) {
+  return apiRequest<void>(`/workspaces/${workspaceId}`, { method: "DELETE" })
 }
 
 export function fetchWorkspaceMembers() {

@@ -45,7 +45,7 @@ export default function TaskDetailModal() {
       destroyOnHidden
       centered
     >
-      {isError ? <Alert type="error" showIcon message="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
+      {isError ? <Alert type="error" showIcon title="Task could not be loaded" description={getFriendlyErrorMessage(error)} /> : task ? (
         <div className="space-y-5 py-3">
           <div className="flex flex-wrap gap-2">
             <Tag icon={<Clock3 size={13} />} color="blue">{statusLabels[task.status]}</Tag>

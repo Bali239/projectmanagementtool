@@ -35,7 +35,7 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      {isError ? <Alert type="error" showIcon message="Tasks could not be loaded" description={getFriendlyErrorMessage(error)} /> : null}
+      {isError ? <Alert type="error" showIcon title="Tasks could not be loaded" description={getFriendlyErrorMessage(error)} /> : null}
       {isPending ? <LoadingState message="Loading your board..." /> : null}
       {!isPending && !isError && filteredTasks.length === 0 ? (
         <div className="flex min-h-72 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white/70">

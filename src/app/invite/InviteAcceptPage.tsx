@@ -37,7 +37,7 @@ export default function InviteAcceptPage({ token }: { token: string }) {
         {invitation ? <>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Join {invitation.workspaceName}</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">Invitation sent to <span className="font-medium text-slate-800">{invitation.email}</span>.</p>
-          {acceptMutation.error && <Alert className="mt-4" type="error" showIcon message={acceptMutation.error.message} />}
+          {acceptMutation.error && <Alert className="mt-4" type="error" showIcon title={acceptMutation.error.message} />}
           <div className="mt-7 flex flex-wrap gap-3">
             {user && <Button type="primary" size="large" loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()}>Accept invitation</Button>}
             {!user && <>
