@@ -31,11 +31,14 @@ export default function Navbar() {
             type="primary"
             size="large"
             shape="round"
-            className="!h-10 !px-4 !text-sm !font-semibold shadow-sm sm:!px-5"
+            className="!h-10 !px-4 !text-sm !font-semibold shadow-sm sm:!px-5 [&.ant-btn-disabled]:!border-[#16796f] [&.ant-btn-disabled]:!bg-[#16796f] [&.ant-btn-disabled]:!text-white [&.ant-btn-disabled]:!opacity-100"
             disabled={loading}
-            onClick={() => router.push(user ? "/dashboard" : "/signup")}
+            onClick={() => router.push(user ? "/dashboard" : "/login")}
           >
-            <span className="inline-flex items-center gap-1.5">{user ? "Open workspace" : "Create workspace"}<ArrowUpRight size={15} /></span>
+            <span className="inline-flex items-center gap-1.5">
+              {loading ? "Checking your session..." : user ? "Open workspace" : "Create workspace"}
+              
+            </span>
           </Button>
         </div>
       </nav>
