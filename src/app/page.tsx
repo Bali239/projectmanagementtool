@@ -19,7 +19,7 @@ export default function Home() {
       <section className="relative px-5 pb-16 pt-16 sm:px-8 sm:pb-20 sm:pt-20">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.13),transparent_55%),linear-gradient(to_right,rgba(15,118,110,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,118,110,0.035)_1px,transparent_1px)] bg-[size:auto,32px_32px,32px_32px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
         <div className="relative mx-auto max-w-7xl">
-          <div className="landing-reveal mx-auto max-w-3xl text-center">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none mx-auto max-w-3xl text-center">
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3.5 py-2 text-xs font-semibold text-emerald-800 shadow-sm sm:text-sm">
               <span className="size-2 rounded-full bg-emerald-600" /> A calmer way to manage your work
             </p>
@@ -33,7 +33,7 @@ export default function Home() {
             </div>
           </div>
 
-          <figure className="landing-reveal landing-reveal-delay-1 relative mx-auto mt-12 max-w-6xl sm:mt-16">
+          <figure className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none relative mx-auto mt-12 max-w-6xl sm:mt-16" style={{ animationDelay: "110ms" }}>
             <div aria-hidden="true" className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-emerald-200/70 via-white to-lime-100/70 blur-xl sm:-inset-7" />
             <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_28px_80px_-35px_rgba(15,23,42,0.32)] sm:rounded-2xl">
               <Image src={dashboardPreview} alt="LetsDo task board showing tasks grouped into To do, In review, Pending, and Completed columns" priority sizes="(max-width: 768px) 100vw, 1200px" className="h-auto w-full" />
@@ -56,7 +56,7 @@ export default function Home() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {benefits.map(({ icon: Icon, title, text }, index) => (
-              <article key={title} className="landing-reveal rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md" style={{ animationDelay: `${index * 90}ms` }}>
+              <article key={title} className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md" style={{ animationDelay: `${index * 90}ms` }}>
                 <span className="mb-6 grid size-11 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><Icon size={20} /></span>
                 <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>

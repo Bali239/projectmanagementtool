@@ -17,7 +17,7 @@ export default function HowToUsePage() {
       <div aria-hidden="true" className="h-[68px]" />
       <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20">
         <div className="mx-auto max-w-7xl">
-          <div className="landing-reveal grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="max-w-3xl">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 sm:text-sm">How to use LetsDo</p>
               <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">Everything you need to keep tasks moving.</h1>
@@ -31,7 +31,7 @@ export default function HowToUsePage() {
 
           <div className="mt-12 grid gap-3 sm:mt-16 sm:grid-cols-2">
             {instructions.map(({ number, icon: Icon, title, description }, index) => (
-              <article key={number} className="landing-reveal flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:gap-5 sm:p-7" style={{ animationDelay: `${index * 80}ms` }}>
+              <article key={number} className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:gap-5 sm:p-7" style={{ animationDelay: `${index * 80}ms` }}>
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><Icon size={20} /></span>
                 <div><p className="text-xs font-semibold text-emerald-800">STEP {number}</p><h2 className="mt-1 text-lg font-semibold text-slate-900">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></div>
               </article>

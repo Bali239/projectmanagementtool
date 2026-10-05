@@ -27,8 +27,7 @@ export default function ResetPasswordForm({ email, token }: { email: string; tok
 
   return <AuthPageLayout mode="reset">
     <AuthCard>
-      <AuthBrand />
-      <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Choose a new password</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Choose a new password</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Use at least 9 characters, including uppercase, lowercase, a number, and a special character.</p>
       {invalidLink ? <div className="mt-6 space-y-4"><p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">This reset link is missing information or is invalid.</p><Link href="/forgot-password" className="block text-sm font-semibold text-emerald-800">Request another link</Link></div> : (
         <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="mt-6 space-y-4" noValidate>

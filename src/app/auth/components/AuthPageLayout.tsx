@@ -11,8 +11,8 @@ export default function AuthPageLayout({ children, mode }: { children: ReactNode
     <main className="relative isolate flex min-h-[calc(100dvh-68px)] items-center justify-center overflow-hidden bg-[#f4f8f6] px-4 py-8 text-slate-900 sm:px-8 sm:py-10">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_14%_18%,rgba(16,185,129,0.14),transparent_38%),radial-gradient(ellipse_at_90%_80%,rgba(132,204,22,0.11),transparent_34%)]" />
       <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-16 -z-10 size-72 rounded-full bg-emerald-200/30 blur-3xl" />
-      {/* Keep every auth flow on the same centered, readable canvas. */}
-      <div key={mode} className="auth-enter mx-auto w-full max-w-[440px]">{children}</div>
+      
+      <div key={mode} className="animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out motion-reduce:animate-none mx-auto w-full max-w-[440px]">{children}</div>
     </main>
   </>
 }

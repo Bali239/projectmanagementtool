@@ -15,7 +15,7 @@ export default function HowWorkPage() {
       <div aria-hidden="true" className="h-[68px]" />
       <section className="px-5 pb-14 pt-16 sm:px-8 sm:pb-20 sm:pt-20">
         <div className="mx-auto max-w-7xl">
-          <div className="landing-reveal max-w-3xl">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none max-w-3xl">
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 sm:text-sm">How it works</p>
             <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">A simple flow from idea to done.</h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">LetsDo gives everyday project work a shared home. Capture the task, make progress visible, and keep the next action close by.</p>
@@ -23,7 +23,7 @@ export default function HowWorkPage() {
 
           <div className="mt-12 grid gap-4 md:mt-16 md:grid-cols-3">
             {steps.map(({ number, icon: Icon, title, body }, index) => (
-              <article key={number} className="landing-reveal relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8" style={{ animationDelay: `${index * 100}ms` }}>
+              <article key={number} className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8" style={{ animationDelay: `${index * 100}ms` }}>
                 <div className="mb-10 flex items-center justify-between"><span className="text-sm font-semibold text-slate-400">{number}</span><span className="grid size-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-800"><Icon size={22} /></span></div>
                 <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>

@@ -37,8 +37,8 @@ export default function SignupForm({ inviteToken }: { inviteToken?: string }) {
 
   return <AuthPageLayout mode="signup">
     <AuthCard>
-      <AuthBrand />
-      <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Create your workspace</h1>
+      
+      <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Create your workspace</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Create your account and start organizing work.</p>
       <GoogleAuthFlow inviteToken={inviteToken} />
       <div className="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />or use email<span className="h-px flex-1 bg-slate-200" /></div>

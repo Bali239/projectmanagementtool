@@ -47,8 +47,7 @@ export default function LoginForm({ passwordReset = false, inviteToken, workspac
 
   return <AuthPageLayout mode="login">
     <AuthCard>
-      <AuthBrand />
-      <h1 className="mt-7 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Welcome back</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Welcome back</h1>
       <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to continue to your workspace.</p>
       {passwordReset && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Password updated. Sign in with your new password.</p>}
       <GoogleAuthFlow inviteToken={inviteToken} />
