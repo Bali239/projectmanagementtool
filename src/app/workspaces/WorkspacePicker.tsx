@@ -106,9 +106,9 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
             </Button>
           </div>
 
-          {workspaceLimits && <p className="mt-5 text-sm text-slate-500">
+          {/* {workspaceLimits && <p className="mt-5 text-sm text-slate-500">
             Created {workspaceLimits.createdCount} of {workspaceLimits.createdLimit} · Member of {workspaceLimits.membershipCount} of {workspaceLimits.membershipLimit}
-          </p>}
+          </p>} */}
           {capacityMessage && <Alert className="mt-4" type="info" showIcon title={capacityMessage} />}
           {inviteError && inviteMessages[inviteError] && <Alert className="mt-4" type={inviteError === "limit" ? "warning" : "info"} showIcon title={inviteMessages[inviteError]} />}
           {deleteMutation.error && <Alert className="mt-4" type="error" showIcon title={deleteMutation.error.message} />}

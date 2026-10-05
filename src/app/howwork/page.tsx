@@ -25,10 +25,10 @@ export default function HowWorkPage() {
       <section className="relative isolate overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(ellipse_at_18%_8%,rgba(16,185,129,0.14),transparent_48%),linear-gradient(to_right,rgba(15,118,110,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,118,110,0.035)_1px,transparent_1px)] bg-[size:auto,32px_32px,32px_32px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
         <div className="mx-auto max-w-7xl">
-          <header className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none max-w-4xl">
+          <header className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none mx-auto max-w-4xl text-center">
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3.5 py-2 text-xs font-semibold text-emerald-800 shadow-sm sm:text-sm"><span className="size-2 rounded-full bg-emerald-600" /> The LetsDo workflow</p>
             <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight text-slate-950 sm:text-6xl">A shared board for <span className="text-emerald-700">work that moves.</span></h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">LetsDo organizes team work inside workspaces. Tasks carry their details, status, timing, and assignee together, so the board reflects what is happening now.</p>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">LetsDo organizes team work inside workspaces. Tasks carry their details, status, timing, and assignee together, so the board reflects what is happening now.</p>
           </header>
 
           <section aria-labelledby="flow-heading" className="mt-14 sm:mt-20">

@@ -29,10 +29,7 @@ export default function Home() {
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
               LetsDo is a task management workspace that brings your tasks, notes, and due dates into one clear board. Keep projects organized, follow progress, and make the next step easier to see.
             </p>
-            <div className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-medium text-slate-600">
-              <Link href="/howwork" className="group inline-flex items-center gap-2 rounded-md py-1 transition-colors hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700">How it works <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" /></Link>
-              <Link href="/howuse" className="group inline-flex items-center gap-2 rounded-md py-1 transition-colors hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700">How to use LetsDo <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" /></Link>
-            </div>
+            
           </div>
 
           <figure className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none relative mx-auto mt-12 max-w-6xl sm:mt-16" style={{ animationDelay: "110ms" }}>
@@ -65,10 +62,7 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900 px-6 py-5 text-white sm:px-8">
-            <p className="inline-flex items-center gap-2 text-sm font-medium sm:text-base"><Check size={17} className="text-emerald-300" /> One board to make the state of work easier to see.</p>
-            <Link href="/howwork" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200 transition-colors hover:text-white">Explore how it works <Eye size={15} /></Link>
-          </div>
+          
         </div>
       </section>
 
