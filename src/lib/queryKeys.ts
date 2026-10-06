@@ -6,6 +6,7 @@ export const taskQueryKeys = {
 export const workspaceQueryKeys = {
   current: ["workspace", "current"] as const,
   members: (workspaceId: string | undefined) => ["workspace", workspaceId, "members"] as const,
+  memberSearch: (workspaceId: string | undefined, search: string) => ["workspace", workspaceId, "members", "search", search] as const,
   invitations: (workspaceId: string | undefined) => ["workspace", workspaceId, "invitations"] as const,
 }
 

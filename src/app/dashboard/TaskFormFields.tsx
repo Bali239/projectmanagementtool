@@ -2,11 +2,12 @@
 
 import { DatePicker, Form, Input, Select, TimePicker, type FormInstance } from "antd"
 import { useQuery } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
 import { Editor } from "@tinymce/tinymce-react"
 import dayjs, { type Dayjs } from "dayjs"
 import type { TaskStatus } from "@/store/tasksSlice"
 import { useAuth } from "@/context/AuthContext"
-import { fetchWorkspaceMembers } from "@/lib/api/workspaces"
+import { searchWorkspaceMembers, type WorkspaceMember } from "@/lib/api/workspaces"
 import { workspaceQueryKeys } from "@/lib/queryKeys"
 
 export type TaskFormValues = {
@@ -25,13 +26,29 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "completed", label: "Completed" },
 ]
 
-export default function TaskFormFields({ form }: { form: FormInstance<TaskFormValues> }) {
+export default function TaskFormFields({ form, currentAssignee }: { form: FormInstance<TaskFormValues>; currentAssignee?: Pick<WorkspaceMember, "id" | "name" | "email"> | null }) {
   const { workspace } = useAuth()
-  const { data: members = [] } = useQuery({
-    queryKey: workspaceQueryKeys.members(workspace?.id),
-    queryFn: fetchWorkspaceMembers,
-    enabled: workspace?.role === "admin",
+  const [memberSearch, setMemberSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [selectedAssigneeOption, setSelectedAssigneeOption] = useState<{ value: string; label: string } | null>(null)
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedSearch(memberSearch.trim()), 500)
+    return () => window.clearTimeout(timeout)
+  }, [memberSearch])
+  const membersQuery = useQuery({
+    queryKey: workspaceQueryKeys.memberSearch(workspace?.id, debouncedSearch),
+    queryFn: () => searchWorkspaceMembers(debouncedSearch),
+    enabled: workspace?.role === "admin" && debouncedSearch.length >= 2,
+    staleTime: 30_000,
   })
+  const members = membersQuery.data ?? []
+  const preservedAssigneeOption = selectedAssigneeOption ?? (currentAssignee
+    ? { value: currentAssignee.id, label: `${currentAssignee.name} (${currentAssignee.email})` }
+    : null)
+  const currentAssigneeOption = preservedAssigneeOption && !members.some(({ id }) => id === preservedAssigneeOption.value)
+    ? [preservedAssigneeOption]
+    : []
+  const memberOptions = [...currentAssigneeOption, ...members.map((member) => ({ value: member.id, label: `${member.name} (${member.email})` }))]
   const dueDate = Form.useWatch("dueDate", form)
   const description = Form.useWatch("description", form) ?? ""
 
@@ -81,10 +98,20 @@ export default function TaskFormFields({ form }: { form: FormInstance<TaskFormVa
       </div>
       <Form.Item name="assigneeId" label="Assign to">
         <Select
+          showSearch
           allowClear
-          placeholder="Choose a workspace member"
-          options={members.map((member) => ({ value: member.id, label: `${member.name} (${member.email})` }))}
-          onChange={(value: string | undefined) => form.setFieldValue("assigneeId", value ?? null)}
+          filterOption={false}
+          onSearch={setMemberSearch}
+          loading={membersQuery.isFetching}
+          notFoundContent={debouncedSearch.length < 2 ? "Type at least 2 characters" : "No matching team members"}
+          placeholder="Search team members by name"
+          options={memberOptions}
+          onChange={(value: string | undefined) => {
+            const member = members.find(({ id }) => id === value)
+            if (!value) setSelectedAssigneeOption(null)
+            else if (member) setSelectedAssigneeOption({ value: member.id, label: `${member.name} (${member.email})` })
+            form.setFieldValue("assigneeId", value ?? null)
+          }}
         />
       </Form.Item>
     </>

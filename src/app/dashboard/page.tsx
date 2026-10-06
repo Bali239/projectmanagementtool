@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { fetchTasks } from "@/lib/api/tasks"
-import { fetchWorkspaceMembers } from "@/lib/api/workspaces"
+import { searchWorkspaceMembers, type WorkspaceMember } from "@/lib/api/workspaces"
 import { taskQueryKeys, workspaceQueryKeys } from "@/lib/queryKeys"
 import { getFriendlyErrorMessage } from "@/lib/friendlyError"
 import LoadingState from "@/components/LoadingState"
@@ -19,10 +19,12 @@ export default function DashboardPage() {
   const [memberSearch, setMemberSearch] = useState("")
   const [debouncedMemberSearch, setDebouncedMemberSearch] = useState("")
   const [selectedMemberId, setSelectedMemberId] = useState<string>()
+  const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null)
   const membersQuery = useQuery({
-    queryKey: workspaceQueryKeys.members(workspace?.id),
-    queryFn: fetchWorkspaceMembers,
-    enabled: !!workspace && isAdmin,
+    queryKey: workspaceQueryKeys.memberSearch(workspace?.id, debouncedMemberSearch),
+    queryFn: () => searchWorkspaceMembers(debouncedMemberSearch),
+    enabled: !!workspace && isAdmin && debouncedMemberSearch.length >= 2,
+    staleTime: 30_000,
   })
   const { data: tasks = [], isPending, isError, error } = useQuery({
     queryKey: taskQueryKeys.list(workspace?.id),
@@ -31,19 +33,21 @@ export default function DashboardPage() {
     refetchInterval: 60_000,
   })
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedMemberSearch(memberSearch.trim().toLocaleLowerCase()), 300)
+    const timeout = window.setTimeout(() => setDebouncedMemberSearch(memberSearch.trim()), 500)
     return () => window.clearTimeout(timeout)
   }, [memberSearch])
 
   const members = membersQuery.data ?? []
-  const memberOptions = members
-    .filter((member) => member.name.toLocaleLowerCase().includes(debouncedMemberSearch))
-    .map((member) => ({ value: member.id, label: `${member.name} (${member.email})` }))
+  const memberOptions = [
+    ...(selectedMember && !members.some(({ id }) => id === selectedMember.id)
+      ? [{ value: selectedMember.id, label: `${selectedMember.name} (${selectedMember.email})` }]
+      : []),
+    ...members.map((member) => ({ value: member.id, label: `${member.name} (${member.email})` })),
+  ]
   const filteredTasks = tasks.filter((task) =>
     task.title.toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase())
     && (!selectedMemberId || task.assigneeId === selectedMemberId),
   )
-  const selectedMember = members.find((member) => member.id === selectedMemberId)
 
   return (
     <section className="mx-auto flex min-h-full w-full max-w-none flex-col gap-4 sm:gap-6">
@@ -57,14 +61,15 @@ export default function DashboardPage() {
             onSearch={setMemberSearch}
             onChange={(value: string | undefined) => {
               setSelectedMemberId(value)
+              setSelectedMember(value ? members.find((member) => member.id === value) ?? null : null)
               setMemberSearch("")
               setDebouncedMemberSearch("")
             }}
             filterOption={false}
-            loading={membersQuery.isPending}
+            loading={membersQuery.isFetching}
             options={memberOptions}
             placeholder="Filter by member"
-            notFoundContent={memberSearch ? "No members found" : "No members"}
+            notFoundContent={debouncedMemberSearch.length < 2 ? "Type at least 2 characters" : "No members found"}
             aria-label="Filter tasks by assigned member"
             className="w-full sm:w-60"
             size="large"

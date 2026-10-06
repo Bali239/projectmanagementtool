@@ -81,7 +81,7 @@ export default function TeamPage() {
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">{workspace?.name}</p>
-          <h1 className="text-2xl font-semibold text-slate-900">Team</h1>
+
           <p className="mt-1 text-sm text-slate-500">People who belong to this workspace.</p>
         </div>
         <Tag color={isAdmin ? "cyan" : "default"} icon={isAdmin ? <ShieldCheck size={13} /> : <UsersRound size={13} />}>
@@ -91,7 +91,26 @@ export default function TeamPage() {
 
       {mutationError && <Alert type="error" showIcon title={mutationError.message} />}
       {membersQuery.isError && <Alert type="error" showIcon title="Team could not be loaded" description={membersQuery.error.message} />}
-
+      {isAdmin && <section aria-labelledby="invite-heading" className="">
+        <h2 id="invite-heading" className="text-base font-semibold text-slate-900">Invite people</h2>
+        <p className="mt-1 text-sm text-slate-500">Invite an existing account or send a link to someone new.</p>
+        <form onSubmit={submitInvite} className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" aria-label="Email address" required className="max-w-lg" />
+          <Button type="primary" htmlType="submit" icon={<MailPlus size={15} />} loading={inviteMutation.isPending}>Send invite</Button>
+          <Button icon={<Upload size={15} />} loading={csvMutation.isPending} onClick={() => fileInput.current?.click()}>Import CSV</Button>
+          <input ref={fileInput} type="file" accept=".csv,text/csv" className="hidden" onChange={selectCsv} />
+        </form>
+        {csvResults && <div className="mt-4 overflow-x-auto border-y border-slate-200">
+          <table className="w-full min-w-136 text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Result</th></tr></thead>
+            <tbody className="divide-y divide-slate-100 bg-white">{csvResults.map((result) => <tr key={`${result.row}-${result.email}`}>
+              <td className="px-3 py-2 tabular-nums">{result.row}</td>
+              <td className="px-3 py-2">{result.email || "—"}</td>
+              <td className="px-3 py-2"><span className="font-medium capitalize">{result.status.replaceAll("-", " ")}</span>{result.message && <span className="ml-2 text-xs text-slate-500">{result.message}</span>}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
+      </section>}
       <section aria-labelledby="members-heading" className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
           <h2 id="members-heading" className="text-base font-semibold text-slate-900">Members</h2>
@@ -120,26 +139,7 @@ export default function TeamPage() {
         ) : <Empty className="py-8" description="No team members yet" />}
       </section>
 
-      {isAdmin && <section aria-labelledby="invite-heading" className="border-t border-slate-200 pt-5">
-        <h2 id="invite-heading" className="text-base font-semibold text-slate-900">Invite people</h2>
-        <p className="mt-1 text-sm text-slate-500">Invite an existing account or send a link to someone new.</p>
-        <form onSubmit={submitInvite} className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" aria-label="Email address" required className="max-w-lg" />
-          <Button type="primary" htmlType="submit" icon={<MailPlus size={15} />} loading={inviteMutation.isPending}>Send invite</Button>
-          <Button icon={<Upload size={15} />} loading={csvMutation.isPending} onClick={() => fileInput.current?.click()}>Import CSV</Button>
-          <input ref={fileInput} type="file" accept=".csv,text/csv" className="hidden" onChange={selectCsv} />
-        </form>
-        {csvResults && <div className="mt-4 overflow-x-auto border-y border-slate-200">
-          <table className="w-full min-w-136 text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Result</th></tr></thead>
-            <tbody className="divide-y divide-slate-100 bg-white">{csvResults.map((result) => <tr key={`${result.row}-${result.email}`}>
-              <td className="px-3 py-2 tabular-nums">{result.row}</td>
-              <td className="px-3 py-2">{result.email || "—"}</td>
-              <td className="px-3 py-2"><span className="font-medium capitalize">{result.status.replaceAll("-", " ")}</span>{result.message && <span className="ml-2 text-xs text-slate-500">{result.message}</span>}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>}
-      </section>}
+
 
       {isAdmin && <section aria-labelledby="pending-heading" className="border-t border-slate-200 pt-5">
         <div className="mb-3 flex items-center justify-between">

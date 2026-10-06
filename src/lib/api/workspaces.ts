@@ -83,6 +83,10 @@ export function fetchWorkspaceMembers() {
   return apiRequest<WorkspaceMember[]>("/workspaces/members")
 }
 
+export function searchWorkspaceMembers(search: string) {
+  return apiRequest<WorkspaceMember[]>(`/workspaces/members?search=${encodeURIComponent(search)}`)
+}
+
 export function removeWorkspaceMember(userId: string) {
   return apiRequest<void>(`/workspaces/members/${userId}`, { method: "DELETE" })
 }

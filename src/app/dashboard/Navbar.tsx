@@ -38,7 +38,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   })
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 300)
+    const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 500)
     return () => window.clearTimeout(timeout)
   }, [dispatch, search])
 
