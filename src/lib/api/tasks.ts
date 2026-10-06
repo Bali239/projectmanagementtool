@@ -10,9 +10,22 @@ type TaskInput = {
   assigneeId: string | null
 }
 
+export type TaskStatusNotification = {
+  id: string
+  taskTitle: string
+  changedBy: string
+  fromStatus: TaskStatus
+  toStatus: TaskStatus
+  createdAt: string
+}
+
 export function fetchTasks(titleQuery = "") {
   const query = titleQuery.trim()
   return apiRequest<BoardTask[]>(query ? `/tasks?q=${encodeURIComponent(query)}` : "/tasks")
+}
+
+export function fetchTaskStatusNotifications() {
+  return apiRequest<TaskStatusNotification[]>("/tasks/status-notifications")
 }
 
 export function createTask(input: TaskInput) {

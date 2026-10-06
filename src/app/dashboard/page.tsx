@@ -30,7 +30,6 @@ export default function DashboardPage() {
     queryKey: taskQueryKeys.list(workspace?.id),
     queryFn: () => fetchTasks(),
     enabled: !!user && !!workspace,
-    refetchInterval: 60_000,
   })
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedMemberSearch(memberSearch.trim()), 500)

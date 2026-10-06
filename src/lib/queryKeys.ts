@@ -1,6 +1,7 @@
 export const taskQueryKeys = {
   all: ["tasks"] as const,
   list: (workspaceId: string | undefined) => ["tasks", workspaceId] as const,
+  statusNotifications: (workspaceId: string | undefined) => ["tasks", workspaceId, "status-notifications"] as const,
 }
 
 export const workspaceQueryKeys = {

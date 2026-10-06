@@ -1,17 +1,35 @@
 "use client"
 
-import { App, Avatar, Button, Dropdown, Input, type MenuProps } from "antd"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { App, Avatar, Badge, Button, Drawer, Dropdown, Empty, Input, Popover, type MenuProps } from "antd"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X } from "lucide-react"
+import { ArrowRight, Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X, Bell } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
 import EditWorkspaceModal from "./EditWorkspaceModal"
 import { useAppDispatch } from "@/store/hooks"
 import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
+import { fetchTaskStatusNotifications } from "@/lib/api/tasks"
+import { taskQueryKeys } from "@/lib/queryKeys"
+import { API_BASE_URL } from "@/lib/api/client"
+import { io } from "socket.io-client"
+
+const statusLabels: Record<string, string> = {
+  todo: "To do",
+  "in-progress": "In progress",
+  "in-review": "In review",
+  completed: "Completed",
+}
+
+const statusStyles: Record<string, string> = {
+  todo: "border-slate-200 bg-slate-50 text-slate-600",
+  "in-progress": "border-sky-200 bg-sky-50 text-sky-700",
+  "in-review": "border-amber-200 bg-amber-50 text-amber-700",
+  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
+}
 
 type NavbarProps = {
   sidebarOpen: boolean
@@ -26,8 +44,16 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
   const { user, workspace, workspaces, refreshWorkspaces, selectWorkspace } = useAuth()
+  const notificationsKey = taskQueryKeys.statusNotifications(workspace?.id)
+  const notificationsQuery = useQuery({
+    queryKey: notificationsKey,
+    queryFn: fetchTaskStatusNotifications,
+    enabled: workspace?.role === "admin",
+    staleTime: 30_000,
+  })
   const [search, setSearch] = useState("")
   const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
@@ -41,6 +67,60 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 500)
     return () => window.clearTimeout(timeout)
   }, [dispatch, search])
+
+  useEffect(() => {
+    if (!user || !workspace) return
+    const socket = io(API_BASE_URL.replace(/\/api\/?$/, ""), {
+      withCredentials: true,
+      auth: { workspaceId: workspace.id },
+    })
+    const refreshRealtimeData = () => {
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
+      if (workspace.role === "admin") {
+        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+      }
+    }
+    socket.on("connect", refreshRealtimeData)
+    socket.on("tasks:changed", refreshRealtimeData)
+    return () => { socket.disconnect() }
+  }, [queryClient, user, workspace?.id, workspace?.role])
+
+  const notifications = notificationsQuery.data ?? []
+  const notificationTitle = <div className="flex min-w-0 items-center justify-between gap-4">
+    <div className="flex min-w-0 items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-700"><Bell size={15} /></span><span className="truncate text-sm font-semibold text-slate-900">Task activity</span></div>
+    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{notifications.length} recent</span>
+  </div>
+  const notificationContent = <div className="-mx-1 max-h-[min(26rem,calc(100dvh-10rem))] w-full overflow-y-auto overscroll-contain px-1 sm:max-h-[min(26rem,calc(100vh-8rem))] sm:w-[min(24rem,calc(100vw-2rem))]">
+    {notificationsQuery.isPending ? <div className="space-y-3 py-2" aria-live="polite" aria-label="Loading notifications">
+      {[0, 1, 2].map((item) => <div key={item} className="flex gap-3 border-b border-slate-100 pb-3 last:border-0"><span className="size-8 shrink-0 animate-pulse rounded-full bg-slate-100" /><div className="min-w-0 flex-1 space-y-2 pt-1"><div className="h-3 w-3/4 animate-pulse rounded bg-slate-100" /><div className="h-5 w-2/3 animate-pulse rounded bg-slate-100" /><div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" /></div></div>)}
+    </div> : null}
+    {notificationsQuery.isError ? <div className="flex flex-col items-center gap-2 py-7 text-center">
+      <span className="flex size-9 items-center justify-center rounded-full bg-rose-50 text-rose-600"><Bell size={16} /></span>
+      <p className="m-0 text-sm font-medium text-slate-800">Couldn’t load activity</p>
+      <p className="m-0 text-xs text-slate-500">Check your connection and try again.</p>
+      <Button size="small" type="link" onClick={() => void notificationsQuery.refetch()}>Try again</Button>
+    </div> : null}
+    {!notificationsQuery.isPending && !notificationsQuery.isError && notifications.length === 0 ? <div className="py-5"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<span className="text-sm text-slate-500">No status changes yet</span>} /></div> : null}
+    {!notificationsQuery.isPending && !notificationsQuery.isError && notifications.map((notification) => {
+      const fromStatus = statusLabels[notification.fromStatus] || notification.fromStatus
+      const toStatus = statusLabels[notification.toStatus] || notification.toStatus
+      const date = new Date(notification.createdAt)
+      const timeLabel = Number.isNaN(date.getTime()) ? "Time unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date)
+      return <article key={notification.id} className="group flex gap-3 border-b border-slate-100 py-3 last:border-0">
+        <Avatar size={32} className="shrink-0 bg-teal-50 text-xs font-semibold text-teal-800">{(notification.changedBy || "?").trim().slice(0, 1).toUpperCase()}</Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 break-words text-[13px] leading-5 text-slate-600"><span className="font-semibold text-slate-900">{notification.changedBy}</span> updated a task</p>
+          <p className="mb-2 mt-0.5 break-words text-sm font-semibold leading-5 text-slate-800">{notification.taskTitle}</p>
+          <div className="flex flex-wrap items-center gap-1.5" aria-label={`Status changed from ${fromStatus} to ${toStatus}`}>
+            <span className={`rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${statusStyles[notification.fromStatus] || "border-slate-200 bg-slate-50 text-slate-600"}`}>{fromStatus}</span>
+            <ArrowRight size={13} aria-hidden="true" className="shrink-0 text-slate-400" />
+            <span className={`rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${statusStyles[notification.toStatus] || "border-slate-200 bg-slate-50 text-slate-600"}`}>{toStatus}</span>
+          </div>
+          <time className="mt-2 block text-[11px] leading-4 text-slate-500" dateTime={notification.createdAt}>{timeLabel}</time>
+        </div>
+      </article>
+    })}
+  </div>
 
   const menuItems: MenuProps["items"] = [
     { key: "account", label: <div className="max-w-52"><div className="truncate font-medium">{user?.displayName || "Your account"}</div><div className="truncate text-xs text-slate-500">{user?.email || "Workspace member"}</div></div>, disabled: true },
@@ -117,6 +197,33 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       {workspace?.role === "admin" && <Button type="primary" icon={<Plus size={16} />} onClick={onCreateTask} className="shrink-0">
         <span className="hidden sm:inline">Create task</span>
       </Button>}
+      {workspace?.role === "admin" && <>
+      <Popover
+        trigger="click"
+        placement="bottomRight"
+        title={notificationTitle}
+        content={notificationContent}
+      >
+        <button type="button" aria-label={`Status notifications${notifications.length ? `, ${notifications.length} recent updates` : ""}`} className="hidden size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700 sm:flex">
+          <Badge count={notifications.length} overflowCount={9} size="small"><Bell size={19} /></Badge>
+        </button>
+      </Popover>
+      <button type="button" aria-label={`Status notifications${notifications.length ? `, ${notifications.length} recent updates` : ""}`} onClick={() => setNotificationsOpen(true)} className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700 sm:hidden">
+        <Badge count={notifications.length} overflowCount={9} size="small"><Bell size={19} /></Badge>
+      </button>
+      <Drawer
+        title={notificationTitle}
+        placement="bottom"
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        height="min(82dvh, 38rem)"
+        width="100vw"
+        className="sm:hidden"
+        styles={{ body: { padding: "12px 16px max(16px, env(safe-area-inset-bottom))", overflow: "hidden" } }}
+      >
+        {notificationContent}
+      </Drawer>
+      </>}
       <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={["click"]} placement="bottomRight">
         <button type="button" aria-label="Open profile menu" className="flex size-9 shrink-0 items-center justify-center rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-teal-700">
           <Avatar src={user?.photoURL || undefined} className="bg-teal-700 font-semibold text-white">
