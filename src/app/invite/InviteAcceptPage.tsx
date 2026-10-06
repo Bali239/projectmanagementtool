@@ -36,7 +36,7 @@ export default function InviteAcceptPage({ token }: { token: string }) {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Workspace invitation</p>
         {invitation ? <>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Join {invitation.workspaceName}</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Invitation sent to <span className="font-medium text-slate-800">{invitation.email}</span>.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Invitation sent by <span className="font-medium text-slate-800">{invitation.inviterEmail || "a workspace admin"}</span>.</p>
           {acceptMutation.error && <Alert className="mt-4" type="error" showIcon title={acceptMutation.error.message} />}
           <div className="mt-7 flex flex-wrap gap-3">
             {user && <Button type="primary" size="large" loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()}>Accept invitation</Button>}
@@ -44,7 +44,7 @@ export default function InviteAcceptPage({ token }: { token: string }) {
               <Link href={`/login?inviteToken=${encodeURIComponent(token)}`}><Button type="primary" size="large">Sign in to join</Button></Link>
               <Link href={`/signup?inviteToken=${encodeURIComponent(token)}`}><Button size="large">Create account</Button></Link>
             </>}
-            {user && <Link href="/workspaces"><Button size="large">Choose workspace</Button></Link>}
+            
           </div>
         </> : <>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Invitation unavailable</h1>

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Alert, Avatar, Button, Empty, Modal, Popconfirm } from "antd"
+import { Alert, Avatar, Button, Empty, Modal, Popconfirm, Tooltip } from "antd"
 import { useRouter } from "next/navigation"
 import { Building2, LogOut, Pencil, Plus, Trash2, DoorOpen } from "lucide-react"
 import LoadingState from "@/components/LoadingState"
@@ -109,15 +109,25 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
               <h1 className="text-2xl font-semibold text-slate-950 sm:text-3xl">Choose a workspace</h1>
               <p className="mt-2 text-sm text-slate-600">Open a space you belong to, or create one of your own.</p>
             </div>
-            <Button type="primary" icon={<Plus size={16} />} disabled={createDisabled} onClick={() => setCreateOpen(true)}>
-              Create workspace
-            </Button>
+            <Tooltip title={capacityMessage}>
+              <Button
+                type="primary"
+                icon={<Plus size={16} />}
+                aria-disabled={createDisabled}
+                className={createDisabled ? "cursor-not-allowed opacity-50" : undefined}
+                onClick={() => {
+                  if (createDisabled) return
+                  setCreateOpen(true)
+                }}
+              >
+                Create workspace
+              </Button>
+            </Tooltip>
           </div>
 
           {/* {workspaceLimits && <p className="mt-5 text-sm text-slate-500">
             Created {workspaceLimits.createdCount} of {workspaceLimits.createdLimit} · Member of {workspaceLimits.membershipCount} of {workspaceLimits.membershipLimit}
           </p>} */}
-          {capacityMessage && <Alert className="mt-4" type="info" showIcon title={capacityMessage} />}
           {inviteError && inviteMessages[inviteError] && <Alert className="mt-4" type={inviteError === "limit" ? "warning" : "info"} showIcon title={inviteMessages[inviteError]} />}
           {deleteMutation.error && <Alert className="mt-4" type="error" showIcon title={deleteMutation.error.message} />}
           {leaveMutation.error && <Alert className="mt-4" type="error" showIcon title={leaveMutation.error.message} />}
@@ -131,32 +141,34 @@ export default function WorkspacePicker({ inviteError }: { inviteError?: string 
           />}
 
           {workspaces.length ? <ul className="mt-7 space-y-3">
-            {workspaces.map((workspace) => <li key={workspace.id} className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm transition-colors hover:border-teal-300 hover:bg-teal-50/30 sm:px-5 sm:py-5">
+            {workspaces.map((workspace) => <li
+              key={workspace.id}
+              role="link"
+              tabIndex={0}
+              onClick={() => { void openWorkspace(workspace) }}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  void openWorkspace(workspace)
+                }
+              }}
+              className="flex cursor-pointer flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm transition-colors hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:px-5 sm:py-5"
+            >
               <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  aria-label={`Open ${workspace.name} workspace`}
-                  onClick={() => { void openWorkspace(workspace) }}
-                  className="shrink-0 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-                >
+                <span className="shrink-0 rounded-md">
                   <Avatar shape="square" size={48} src={workspace.photoUrl || undefined} className="bg-teal-50 font-semibold text-teal-800">
                     {workspace.name.slice(0, 1).toUpperCase()}
                   </Avatar>
-                </button>
+                </span>
                 <div className="min-w-0">
                   <h2 className="truncate text-base font-semibold text-slate-900">
-                    <button
-                      type="button"
-                      onClick={() => { void openWorkspace(workspace) }}
-                      className="max-w-full cursor-pointer truncate rounded-sm text-left hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-                    >
-                      {workspace.name}
-                    </button>
+                    {workspace.name}
                   </h2>
                   <p className="mt-1 text-sm capitalize text-slate-500">{workspace.role}</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                 {workspace.isCreator && <>
                   <Button icon={<Pencil size={15} />} onClick={() => setEditingWorkspace(workspace)}>Edit</Button>
                   <Popconfirm

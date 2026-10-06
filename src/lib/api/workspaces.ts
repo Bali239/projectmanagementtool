@@ -107,7 +107,7 @@ export function revokeWorkspaceInvitation(invitationId: string) {
 }
 
 export function previewWorkspaceInvitation(token: string) {
-  return apiRequest<{ invitation: { email: string; workspaceName: string } }>(`/workspaces/invitations/preview/${token}`)
+  return apiRequest<{ invitation: { email: string; inviterEmail: string | null; workspaceName: string } }>(`/workspaces/invitations/preview/${token}`)
 }
 
 export function acceptWorkspaceInvitation(token: string) {
