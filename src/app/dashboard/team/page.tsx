@@ -1,9 +1,9 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Alert, App, Avatar, Button, Empty, Input, Popconfirm, Tag } from "antd"
+import { Alert, App, Avatar, Button, Empty, Input, Popconfirm, Popover, Tag } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MailPlus, ShieldCheck, Upload, UserRoundMinus, UsersRound } from "lucide-react"
+import { ChevronDown, MailPlus, ShieldCheck, Upload, UserRoundMinus, UsersRound } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import {
   createWorkspaceInvitation,
@@ -98,6 +98,33 @@ export default function TeamPage() {
           <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" aria-label="Email address" required className="max-w-lg" />
           <Button type="primary" htmlType="submit" icon={<MailPlus size={15} />} loading={inviteMutation.isPending}>Send invite</Button>
           <Button icon={<Upload size={15} />} loading={csvMutation.isPending} onClick={() => fileInput.current?.click()}>Import CSV</Button>
+          <Popover
+            trigger="click"
+            placement="bottomRight"
+            content={<div className="w-[min(22rem,calc(100vw-2rem))]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-900">Pending invitations</h3>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs tabular-nums text-slate-600">{invitationsQuery.data?.length ?? 0}</span>
+              </div>
+              {invitationsQuery.isError && <Alert className="mb-3" type="error" showIcon title="Invitations could not be loaded" description={invitationsQuery.error.message} />}
+              {invitationsQuery.isPending ? <p className="py-5 text-center text-sm text-slate-500">Loading invitations...</p> : invitationsQuery.data?.length ? (
+                <ul className="max-h-[min(55vh,24rem)] divide-y divide-slate-100 overflow-y-auto">
+                  {invitationsQuery.data.map((invitation) => <li key={invitation.id} className="flex min-w-0 items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <Avatar size={34} className="shrink-0 bg-slate-200 text-slate-600">{invitation.email.slice(0, 1).toUpperCase()}</Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">{invitation.email}</p>
+                      <p className="text-xs text-slate-500">Expires {new Date(invitation.expiresAt).toLocaleDateString()}</p>
+                    </div>
+                    <Popconfirm title="Revoke this invitation?" okText="Revoke" onConfirm={() => revokeMutation.mutate(invitation.id)}>
+                      <Button type="text" aria-label={`Revoke invite for ${invitation.email}`} title="Revoke invitation" icon={<UserRoundMinus size={16} />} loading={revokeMutation.isPending && revokeMutation.variables === invitation.id} />
+                    </Popconfirm>
+                  </li>)}
+                </ul>
+              ) : !invitationsQuery.isError ? <p className="py-4 text-sm text-slate-500">No pending invitations.</p> : null}
+            </div>}
+          >
+            <Button aria-label={`Show ${invitationsQuery.data?.length ?? 0} pending invitations`} icon={<ChevronDown size={15} />}>Pending invitations <span className="ml-1 tabular-nums">{invitationsQuery.data?.length ?? 0}</span></Button>
+          </Popover>
           <input ref={fileInput} type="file" accept=".csv,text/csv" className="hidden" onChange={selectCsv} />
         </form>
         {csvResults && <div className="mt-4 overflow-x-auto border-y border-slate-200">
@@ -141,23 +168,6 @@ export default function TeamPage() {
 
 
 
-      {isAdmin && <section aria-labelledby="pending-heading" className="border-t border-slate-200 pt-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 id="pending-heading" className="text-base font-semibold text-slate-900">Pending invitations</h2>
-          <span className="text-sm tabular-nums text-slate-500">{invitationsQuery.data?.length ?? 0}</span>
-        </div>
-        {invitationsQuery.isError && <Alert type="error" showIcon title="Invitations could not be loaded" description={invitationsQuery.error.message} />}
-        {invitationsQuery.data?.length ? <ul className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
-          {invitationsQuery.data.map((invitation) => <li key={invitation.id} className="flex items-center gap-3 px-3 py-3 sm:px-4">
-            <Avatar className="shrink-0 bg-slate-200 text-slate-600">{invitation.email.slice(0, 1).toUpperCase()}</Avatar>
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{invitation.email}</p><p className="text-xs text-slate-500">Expires {new Date(invitation.expiresAt).toLocaleDateString()}</p></div>
-            <Tag>Invited</Tag>
-            <Popconfirm title="Revoke this invitation?" okText="Revoke" onConfirm={() => revokeMutation.mutate(invitation.id)}>
-              <Button type="text" aria-label={`Revoke invite for ${invitation.email}`} title="Revoke invitation" icon={<UserRoundMinus size={16} />} />
-            </Popconfirm>
-          </li>)}
-        </ul> : !invitationsQuery.isPending && <p className="py-5 text-sm text-slate-500">No pending invitations.</p>}
-      </section>}
     </section>
   )
 }
