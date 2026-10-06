@@ -53,7 +53,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   })
   const [search, setSearch] = useState("")
   const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [seenNotificationState, setSeenNotificationState] = useState<{ workspaceId: string | null; ids: string[] }>({ workspaceId: null, ids: [] })
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
@@ -67,6 +69,17 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 500)
     return () => window.clearTimeout(timeout)
   }, [dispatch, search])
+
+  useEffect(() => {
+    const breakpoint = window.matchMedia("(max-width: 639px)")
+    const syncViewport = () => {
+      setIsMobile(breakpoint.matches)
+      setNotificationsOpen(false)
+    }
+    syncViewport()
+    breakpoint.addEventListener("change", syncViewport)
+    return () => breakpoint.removeEventListener("change", syncViewport)
+  }, [])
 
   useEffect(() => {
     if (!user || !workspace) return
@@ -86,9 +99,39 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   }, [queryClient, user, workspace?.id, workspace?.role])
 
   const notifications = notificationsQuery.data ?? []
+  const seenNotificationIds = new Set(seenNotificationState.workspaceId === workspace?.id ? seenNotificationState.ids : [])
+  const unreadCount = notifications.reduce((count, notification) => count + Number(!seenNotificationIds.has(notification.id)), 0)
+
+  useEffect(() => {
+    if (!workspace?.id) {
+      setSeenNotificationState({ workspaceId: null, ids: [] })
+      return
+    }
+    try {
+      const savedIds: unknown = JSON.parse(window.localStorage.getItem(`letsdo.notifications.seen.${workspace.id}`) || "[]")
+      setSeenNotificationState({
+        workspaceId: workspace.id,
+        ids: Array.isArray(savedIds) ? savedIds.filter((id): id is string => typeof id === "string") : [],
+      })
+    } catch {
+      setSeenNotificationState({ workspaceId: workspace.id, ids: [] })
+    }
+  }, [workspace?.id])
+
+  useEffect(() => {
+    if (!notificationsOpen || !workspace?.id || notificationsQuery.isPending || notificationsQuery.isError) return
+    const ids = notifications.map(({ id }) => id)
+    setSeenNotificationState({ workspaceId: workspace.id, ids })
+    try {
+      window.localStorage.setItem(`letsdo.notifications.seen.${workspace.id}`, JSON.stringify(ids))
+    } catch {
+      // The in-memory state still clears the badge for this session.
+    }
+  }, [notificationsOpen, notifications, notificationsQuery.isError, notificationsQuery.isPending, workspace?.id])
+
   const notificationTitle = <div className="flex min-w-0 items-center justify-between gap-4">
     <div className="flex min-w-0 items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-700"><Bell size={15} /></span><span className="truncate text-sm font-semibold text-slate-900">Task activity</span></div>
-    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{notifications.length} recent</span>
+    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{unreadCount} unread</span>
   </div>
   const notificationContent = <div className="-mx-1 max-h-[min(26rem,calc(100dvh-10rem))] w-full overflow-y-auto overscroll-contain px-1 sm:max-h-[min(26rem,calc(100vh-8rem))] sm:w-[min(24rem,calc(100vw-2rem))]">
     {notificationsQuery.isPending ? <div className="space-y-3 py-2" aria-live="polite" aria-label="Loading notifications">
@@ -198,31 +241,33 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
         <span className="hidden sm:inline">Create task</span>
       </Button>}
       {workspace?.role === "admin" && <>
-      <Popover
-        trigger="click"
-        placement="bottomRight"
-        title={notificationTitle}
-        content={notificationContent}
-      >
-        <button type="button" aria-label={`Status notifications${notifications.length ? `, ${notifications.length} recent updates` : ""}`} className="hidden size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700 sm:flex">
-          <Badge count={notifications.length} overflowCount={9} size="small"><Bell size={19} /></Badge>
-        </button>
-      </Popover>
-      <button type="button" aria-label={`Status notifications${notifications.length ? `, ${notifications.length} recent updates` : ""}`} onClick={() => setNotificationsOpen(true)} className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700 sm:hidden">
-        <Badge count={notifications.length} overflowCount={9} size="small"><Bell size={19} /></Badge>
-      </button>
-      <Drawer
-        title={notificationTitle}
-        placement="bottom"
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-        height="min(82dvh, 38rem)"
-        width="100vw"
-        className="sm:hidden"
-        styles={{ body: { padding: "12px 16px max(16px, env(safe-area-inset-bottom))", overflow: "hidden" } }}
-      >
-        {notificationContent}
-      </Drawer>
+        {isMobile ? <>
+          <button type="button" aria-label={`Status notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} onClick={() => setNotificationsOpen(true)} className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700">
+            <Badge count={unreadCount} overflowCount={9} size="small"><Bell size={19} /></Badge>
+          </button>
+          <Drawer
+            title={notificationTitle}
+            placement="bottom"
+            open={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+            height="min(82dvh, 38rem)"
+            width="100vw"
+            styles={{ body: { padding: "12px 16px max(16px, env(safe-area-inset-bottom))", overflow: "hidden" } }}
+          >
+            {notificationContent}
+          </Drawer>
+        </> : <Popover
+          trigger="click"
+          placement="bottomRight"
+          open={notificationsOpen}
+          onOpenChange={setNotificationsOpen}
+          title={notificationTitle}
+          content={notificationContent}
+        >
+          <button type="button" aria-label={`Status notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-600 outline-none ring-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-700">
+            <Badge count={unreadCount} overflowCount={9} size="small"><Bell size={19} /></Badge>
+          </button>
+        </Popover>}
       </>}
       <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={["click"]} placement="bottomRight">
         <button type="button" aria-label="Open profile menu" className="flex size-9 shrink-0 items-center justify-center rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-teal-700">
