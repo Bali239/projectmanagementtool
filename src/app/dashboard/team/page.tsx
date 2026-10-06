@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Alert, App, Avatar, Button, Empty, Input, Popconfirm, Popover, Tag } from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ChevronDown, MailPlus, ShieldCheck, Upload, UserRoundMinus, UsersRound } from "lucide-react"
@@ -12,7 +12,6 @@ import {
   importWorkspaceInvitations,
   removeWorkspaceMember,
   revokeWorkspaceInvitation,
-  type CsvInviteResult,
 } from "@/lib/api/workspaces"
 import { workspaceQueryKeys } from "@/lib/queryKeys"
 
@@ -22,7 +21,8 @@ export default function TeamPage() {
   const { user, workspace } = useAuth()
   const isAdmin = workspace?.role === "admin"
   const [email, setEmail] = useState("")
-  const [csvResults, setCsvResults] = useState<CsvInviteResult[] | null>(null)
+  const [pendingSearch, setPendingSearch] = useState("")
+  const [debouncedPendingSearch, setDebouncedPendingSearch] = useState("")
   const fileInput = useRef<HTMLInputElement>(null)
   const memberKey = workspaceQueryKeys.members(workspace?.id)
   const invitationKey = workspaceQueryKeys.invitations(workspace?.id)
@@ -47,7 +47,13 @@ export default function TeamPage() {
   const csvMutation = useMutation({
     mutationFn: async (file: File) => importWorkspaceInvitations(await file.text()),
     onSuccess: async (result) => {
-      setCsvResults(result.results)
+      const sent = result.summary.sent ?? 0
+      const skipped = result.results.length - sent
+      if (sent > 0) {
+        message.success(`${sent} invitation${sent === 1 ? "" : "s"} sent${skipped ? `; ${skipped} row${skipped === 1 ? "" : "s"} skipped` : ""}.`)
+      } else {
+        message.warning("No invitations were sent from this CSV.")
+      }
       await queryClient.invalidateQueries({ queryKey: invitationKey })
     },
   })
@@ -64,6 +70,14 @@ export default function TeamPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: invitationKey }),
   })
   const mutationError = inviteMutation.error || csvMutation.error || removeMutation.error || revokeMutation.error
+  const filteredInvitations = (invitationsQuery.data ?? []).filter((invitation) =>
+    invitation.email.toLocaleLowerCase().includes(debouncedPendingSearch.toLocaleLowerCase()),
+  )
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedPendingSearch(pendingSearch.trim()), 500)
+    return () => window.clearTimeout(timeout)
+  }, [pendingSearch])
 
   function submitInvite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -97,7 +111,16 @@ export default function TeamPage() {
         <form onSubmit={submitInvite} className="mt-4 flex flex-col gap-2 sm:flex-row">
           <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" aria-label="Email address" required className="max-w-lg" />
           <Button type="primary" htmlType="submit" icon={<MailPlus size={15} />} loading={inviteMutation.isPending}>Send invite</Button>
-          <Button icon={<Upload size={15} />} loading={csvMutation.isPending} onClick={() => fileInput.current?.click()}>Import CSV</Button>
+          <Popconfirm
+            title="Send invitations from this CSV?"
+            description="We’ll read the email column and send an invitation to each eligible address as soon as you import the file."
+            okText="Choose CSV"
+            cancelText="Cancel"
+            disabled={csvMutation.isPending}
+            onConfirm={() => fileInput.current?.click()}
+          >
+            <Button icon={<Upload size={15} />} loading={csvMutation.isPending}>Import CSV</Button>
+          </Popconfirm>
           <Popover
             trigger="click"
             placement="bottomRight"
@@ -106,10 +129,19 @@ export default function TeamPage() {
                 <h3 className="text-sm font-semibold text-slate-900">Pending invitations</h3>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs tabular-nums text-slate-600">{invitationsQuery.data?.length ?? 0}</span>
               </div>
+              <Input
+                size="small"
+                allowClear
+                value={pendingSearch}
+                onChange={(event) => setPendingSearch(event.target.value)}
+                placeholder="Search by email"
+                aria-label="Search pending invitations by email"
+                className="mb-2"
+              />
               {invitationsQuery.isError && <Alert className="mb-3" type="error" showIcon title="Invitations could not be loaded" description={invitationsQuery.error.message} />}
-              {invitationsQuery.isPending ? <p className="py-5 text-center text-sm text-slate-500">Loading invitations...</p> : invitationsQuery.data?.length ? (
+              {invitationsQuery.isPending ? <p className="py-5 text-center text-sm text-slate-500">Loading invitations...</p> : filteredInvitations.length ? (
                 <ul className="max-h-[min(55vh,24rem)] divide-y divide-slate-100 overflow-y-auto">
-                  {invitationsQuery.data.map((invitation) => <li key={invitation.id} className="flex min-w-0 items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  {filteredInvitations.map((invitation) => <li key={invitation.id} className="flex min-w-0 items-center gap-3 py-3 first:pt-0 last:pb-0">
                     <Avatar size={34} className="shrink-0 bg-slate-200 text-slate-600">{invitation.email.slice(0, 1).toUpperCase()}</Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-800">{invitation.email}</p>
@@ -120,23 +152,15 @@ export default function TeamPage() {
                     </Popconfirm>
                   </li>)}
                 </ul>
-              ) : !invitationsQuery.isError ? <p className="py-4 text-sm text-slate-500">No pending invitations.</p> : null}
+              ) : invitationsQuery.data?.length ? <p className="py-4 text-center text-sm text-slate-500">No invitations match that email.</p>
+                : !invitationsQuery.isError ? <p className="py-4 text-sm text-slate-500">No pending invitations.</p> : null}
             </div>}
           >
             <Button aria-label={`Show ${invitationsQuery.data?.length ?? 0} pending invitations`} icon={<ChevronDown size={15} />}>Pending invitations <span className="ml-1 tabular-nums">{invitationsQuery.data?.length ?? 0}</span></Button>
           </Popover>
           <input ref={fileInput} type="file" accept=".csv,text/csv" className="hidden" onChange={selectCsv} />
         </form>
-        {csvResults && <div className="mt-4 overflow-x-auto border-y border-slate-200">
-          <table className="w-full min-w-136 text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Result</th></tr></thead>
-            <tbody className="divide-y divide-slate-100 bg-white">{csvResults.map((result) => <tr key={`${result.row}-${result.email}`}>
-              <td className="px-3 py-2 tabular-nums">{result.row}</td>
-              <td className="px-3 py-2">{result.email || "—"}</td>
-              <td className="px-3 py-2"><span className="font-medium capitalize">{result.status.replaceAll("-", " ")}</span>{result.message && <span className="ml-2 text-xs text-slate-500">{result.message}</span>}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>}
+
       </section>}
       <section aria-labelledby="members-heading" className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
