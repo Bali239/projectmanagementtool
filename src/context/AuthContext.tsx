@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch])
 
   useEffect(() => {
+    if (status === "loading") return
     if (!user) {
       window.sessionStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY)
       setActiveWorkspaceId(null)
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
     return () => { active = false }
-  }, [user])
+  }, [status, user])
 
   const currentUserId = user?.uid ?? null
   const workspaces = workspaceState.userId === currentUserId ? workspaceState.workspaces : []

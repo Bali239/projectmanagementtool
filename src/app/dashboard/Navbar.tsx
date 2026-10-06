@@ -3,7 +3,7 @@
 import { App, Avatar, Button, Dropdown, Input, type MenuProps } from "antd"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
@@ -22,6 +22,7 @@ type NavbarProps = {
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
   const { modal } = App.useApp()
   const router = useRouter()
+  const pathname = usePathname()
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
   const { user, workspace, workspaces, refreshWorkspaces, selectWorkspace } = useAuth()
@@ -85,7 +86,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     if (!key.startsWith("workspace:")) return
     selectWorkspace(key.slice("workspace:".length))
     void queryClient.invalidateQueries()
-    router.replace("/dashboard")
+    router.replace(pathname.startsWith("/dashboard") ? pathname : "/dashboard")
   }
 
   return (
