@@ -54,10 +54,11 @@ export function listUserWorkspaces() {
   return apiRequest<UserWorkspaceList>("/workspaces")
 }
 
-export function createWorkspace(input: { name: string; timezone: string; photo?: File }) {
+export function createWorkspace(input: { name: string; photo?: File }) {
   const formData = new FormData()
   formData.append("name", input.name)
-  formData.append("timezone", input.timezone)
+  // Keep the backend's timezone field populated while using UTC as the default.
+  formData.append("timezone", "UTC")
   if (input.photo) formData.append("photo", input.photo)
   return apiRequest<{ workspace: WorkspaceSummary }>("/workspaces", {
     method: "POST",

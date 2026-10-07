@@ -5,7 +5,7 @@ import { Avatar, Button, Form, Input } from "antd"
 import { useMutation } from "@tanstack/react-query"
 import { createWorkspace, type WorkspaceSummary } from "@/lib/api/workspaces"
 
-type WorkspaceFormValues = { name: string; timezone: string }
+type WorkspaceFormValues = { name: string }
 type WorkspaceOnboardingProps = {
   onCreated: (workspace: WorkspaceSummary) => void | Promise<void>
   onCancel: () => void
@@ -33,7 +33,7 @@ export default function WorkspaceOnboarding({ onCreated, onCancel }: WorkspaceOn
   }, [photo])
 
   function submit(values: WorkspaceFormValues) {
-    mutation.mutate({ name: values.name.trim(), timezone: values.timezone.trim(), photo: photo || undefined })
+    mutation.mutate({ name: values.name.trim(), photo: photo || undefined })
   }
 
   return (
@@ -45,16 +45,11 @@ export default function WorkspaceOnboarding({ onCreated, onCancel }: WorkspaceOn
           form={form}
           layout="vertical"
           className="mt-7"
-          initialValues={{ timezone: "UTC" }}
           onFinish={submit}
         >
           <Form.Item name="name" label="Workspace name" rules={[{ required: true, whitespace: true, min: 2, max: 100 }]}>
             <Input size="large" autoComplete="organization" placeholder="e.g. Product team" maxLength={100} />
           </Form.Item>
-          <Form.Item name="timezone" label="Workspace timezone" rules={[{ required: true }]}>
-            <Input size="large" placeholder="America/New_York" />
-          </Form.Item>
-          
           <div className="mb-5 flex items-center gap-4">
             <Avatar shape="square" size={56} src={previewUrl || undefined} className="shrink-0 bg-teal-50 text-teal-800">
               {form.getFieldValue("name")?.trim().slice(0, 1).toUpperCase() || "W"}
