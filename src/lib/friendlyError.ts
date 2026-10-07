@@ -1,3 +1,4 @@
+/** Maps common request failures to messages that are safe to show in the UI. */
 export function getFriendlyErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : ""
 

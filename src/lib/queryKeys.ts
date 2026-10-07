@@ -1,4 +1,6 @@
+// Shared query key factories keep cache entries consistent across queries and invalidations.
 export const taskQueryKeys = {
+  // This prefix can be used to match all task queries.
   all: ["tasks"] as const,
   list: (workspaceId: string | undefined) => ["tasks", workspaceId] as const,
   statusNotifications: (workspaceId: string | undefined) => ["tasks", workspaceId, "status-notifications"] as const,

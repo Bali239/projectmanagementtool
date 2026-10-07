@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api/client"
 import type { AuthUser } from "@/store/authSlice"
 
+// Authentication endpoints return the API's typed response payloads.
 export function getCurrentUser() {
   return apiRequest<{ user: AuthUser }>("/auth/me")
 }

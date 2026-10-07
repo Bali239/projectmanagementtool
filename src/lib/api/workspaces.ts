@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api/client"
 
+// Response types shared by workspace API calls and UI components.
 export type WorkspaceSummary = {
   id: string
   name: string
@@ -44,6 +45,7 @@ export type CsvInviteResult = {
   message?: string
 }
 
+// Workspace API functions keep endpoint paths and request payloads out of UI components.
 export function getCurrentWorkspace() {
   return apiRequest<{ workspace: WorkspaceSummary | null }>("/workspaces/current")
 }

@@ -10,6 +10,7 @@ const apiClient = axios.create({
 
 export const ACTIVE_WORKSPACE_STORAGE_KEY = "letsdo.activeWorkspaceId"
 
+// Attach the selected workspace to requests made in the browser.
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const workspaceId = window.sessionStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY)
@@ -33,6 +34,7 @@ apiClient.interceptors.response.use(undefined, async (error: AxiosError) => {
 
   config.refreshRetried = true
   try {
+    // Share one refresh request across concurrent 401 responses.
     if (!refreshPromise) {
       refreshPromise = apiClient.post("/auth/refresh").then(() => undefined).finally(() => {
         refreshPromise = null

@@ -1,7 +1,9 @@
 import { z } from "zod"
 
+// Normalize email input once so login and account recovery use the same rules.
 const emailSchema = z.string().trim().email("Enter a valid email address.").toLowerCase()
 
+// Signup and password reset share the same password requirements.
 export const passwordSchema = z.string()
   .min(9, "Use at least 9 characters.")
   .regex(/[A-Z]/, "Add at least one uppercase letter.")
