@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
+// Session storage key used to restore the user's sidebar preference.
 export const SIDEBAR_PREFERENCE_KEY = "jiratodo-sidebar-open"
 
 type UiState = {
@@ -17,6 +18,7 @@ const uiSlice = createSlice({
   initialState,
   reducers: {
     sidebarStateHydrated(state, action: PayloadAction<boolean>) {
+      // Mark the saved preference as loaded before the UI relies on it.
       state.sidebarOpen = action.payload
       state.hydrated = true
     },

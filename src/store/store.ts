@@ -3,6 +3,7 @@ import tasksReducer from "./tasksSlice";
 import uiReducer from "./uiSlice";
 import authReducer from "./authSlice";
 
+// Combine feature slices into the application's single Redux store.
 export const store = configureStore({
 	reducer: {
 		app: (state = {}) => state,

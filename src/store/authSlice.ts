@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
+// User identity and authentication status shared across the app.
 export type AuthUser = {
   uid: string
   email: string | null

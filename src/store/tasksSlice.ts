@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
+// Keep status values and their TypeScript type in sync.
 export const taskStatuses = ["todo", "in-progress", "in-review", "completed"] as const
 export type TaskStatus = (typeof taskStatuses)[number]
 
@@ -70,6 +71,7 @@ const tasksSlice = createSlice({
       state.taskEditOrigin = null
     },
     closeTaskEdit(state) {
+      // Return to details if editing started from the task details view.
       if (state.taskEditOrigin === "details" && state.activeTaskId) {
         state.taskView = "details"
       } else {
