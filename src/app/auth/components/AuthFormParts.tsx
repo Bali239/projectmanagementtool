@@ -4,51 +4,128 @@ import { useState, type ReactNode } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { useFormState, type FieldValues, type Path, type UseFormReturn } from "react-hook-form"
 
-export function AuthField<T extends FieldValues>({ label, name, type = "text", placeholder, form, autoComplete }: {
+type AuthFieldProps<T extends FieldValues> = {
   label: string
   name: Path<T>
   type?: string
   placeholder: string
   form: UseFormReturn<T>
   autoComplete?: string
-}) {
+}
+
+export function AuthField<T extends FieldValues>({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  form,
+  autoComplete,
+}: AuthFieldProps<T>) {
   const [passwordVisible, setPasswordVisible] = useState(false)
   const { errors } = useFormState({ control: form.control, name })
   const error = errors[name as keyof typeof errors]?.message
   const errorId = `${String(name).replace(/\./g, "-")}-error`
   const isPassword = type === "password"
 
-  return <div>
-    <label htmlFor={String(name)} className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
-    <div className="relative">
-      <input {...form.register(name)} id={String(name)} type={isPassword && passwordVisible ? "text" : type} autoComplete={autoComplete} placeholder={placeholder} aria-invalid={!!error} aria-describedby={error ? errorId : undefined} className={`h-11 w-full rounded-xl border bg-white px-3.5 text-sm font-normal text-slate-900 shadow-sm outline-none transition duration-150 placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 aria-invalid:border-red-400 ${isPassword ? "pr-11" : ""} ${error ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-slate-200"}`} />
-      {isPassword && <button type="button" aria-label={passwordVisible ? "Hide password" : "Show password"} aria-pressed={passwordVisible} onClick={() => setPasswordVisible((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-700">
-        {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
-      </button>}
+  return (
+    <div>
+      <label
+        htmlFor={String(name)}
+        className="mb-1.5 block text-sm font-semibold text-slate-700"
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          {...form.register(name)}
+          id={String(name)}
+          type={isPassword && passwordVisible ? "text" : type}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
+          className={`h-11 w-full rounded-xl border bg-white px-3.5 text-sm font-normal text-slate-900 shadow-sm outline-none transition duration-150 placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 aria-invalid:border-red-400 ${isPassword ? "pr-11" : ""} ${error ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-slate-200"}`}
+        />
+        {/* The visibility control is a button so it cannot submit the form. */}
+        {isPassword && (
+          <button
+            type="button"
+            aria-label={passwordVisible ? "Hide password" : "Show password"}
+            aria-pressed={passwordVisible}
+            onClick={() => setPasswordVisible((visible) => !visible)}
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-700"
+          >
+            {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        )}
+      </div>
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 block text-xs font-medium text-red-600">
+          {String(error)}
+        </p>
+      )}
     </div>
-    {error && <p id={errorId} role="alert" className="mt-1.5 block text-xs font-medium text-red-600">{String(error)}</p>}
-  </div>
+  )
 }
 
 export function AuthError({ error, fallback }: { error?: unknown; fallback?: string }) {
   const message = error instanceof Error ? error.message : fallback
-  return <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-5 text-red-800">{message || "Something went wrong. Please try again."}</p>
+
+  return (
+    <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-5 text-red-800">
+      {message || "Something went wrong. Please try again."}
+    </p>
+  )
 }
 
 export function AuthSubmit({ children, loading }: { children: ReactNode; loading: boolean }) {
   // Expose pending state to assistive technology and prevent duplicate submissions.
-  return <button type="submit" disabled={loading} aria-busy={loading} className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-700 text-sm font-semibold text-white shadow-sm transition duration-150 hover:-translate-y-px hover:bg-emerald-800 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70 disabled:shadow-none motion-reduce:transform-none cursor-pointer">{loading ? "Please wait..." : children}</button>
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      aria-busy={loading}
+      className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-700 text-sm font-semibold text-white shadow-sm transition duration-150 hover:-translate-y-px hover:bg-emerald-800 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70 disabled:shadow-none motion-reduce:transform-none cursor-pointer"
+    >
+      {loading ? "Please wait..." : children}
+    </button>
+  )
 }
 
 export function GoogleIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 48 48" className="size-4.5">
-    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
-    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.75 7.18l7.73 6C44.43 37.93 46.98 31.95 46.98 24.55Z" />
-    <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.55 2.56 10.78l7.97-6.19Z" />
-    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
-  </svg>
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="size-4.5">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.75 7.18l7.73 6C44.43 37.93 46.98 31.95 46.98 24.55Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.55 2.56 10.78l7.97-6.19Z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"
+      />
+    </svg>
+  )
 }
 
 export function GoogleButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
-  return <button type="button" disabled={loading} aria-busy={loading} onClick={onClick} className="mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition duration-150 hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 disabled:shadow-none motion-reduce:transform-none"><GoogleIcon />{loading ? "Connecting..." : "Continue with Google"}</button>
+  return (
+    <button
+      type="button"
+      disabled={loading}
+      aria-busy={loading}
+      onClick={onClick}
+      className="mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition duration-150 hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 disabled:shadow-none motion-reduce:transform-none"
+    >
+      <GoogleIcon />
+      {loading ? "Connecting..." : "Continue with Google"}
+    </button>
+  )
 }
