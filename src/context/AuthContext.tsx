@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }>({ userId: null, workspaces: [], limits: null, loading: true, error: null })
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null)
 
+  // Initialize Redux auth state from the server's session cookie.
   useEffect(() => {
     dispatch(authLoading())
     getCurrentUser()
@@ -47,12 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === "loading") return
     if (!user) {
+      // Clear workspace data and its saved selection when the user signs out.
       window.sessionStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY)
       setActiveWorkspaceId(null)
       setWorkspaceState({ userId: null, workspaces: [], limits: null, loading: false, error: null })
       return
     }
     let active = true
+    // Restore a saved workspace only if it still belongs to the signed-in user.
     listUserWorkspaces()
       .then((result) => {
         if (!active) return
@@ -71,9 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       })
 
+    // Ignore stale responses if the user changes or this provider unmounts.
     return () => { active = false }
   }, [status, user])
 
+  // Avoid exposing one user's workspace data while another user's list is loading.
   const currentUserId = user?.uid ?? null
   const workspaces = workspaceState.userId === currentUserId ? workspaceState.workspaces : []
   const workspace = workspaces.find(({ id }) => id === activeWorkspaceId) || null
@@ -85,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function selectWorkspace(workspaceId: string | null) {
+    // Keep the active workspace across page reloads in this browser session.
     if (workspaceId) window.sessionStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, workspaceId)
     else window.sessionStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY)
     setActiveWorkspaceId(workspaceId)
@@ -109,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
+  // Fail early when a component is rendered outside the provider.
   if (!context) throw new Error("useAuth must be used within AuthProvider")
   return context
 }
@@ -118,6 +125,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
 
   useEffect(() => {
+    // Wait for session restoration before deciding whether to redirect.
     if (!loading && !user) router.replace("/login")
   }, [loading, router, user])
 
@@ -138,6 +146,7 @@ export function GuestGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
 
+    // Recheck the server session before rendering pages intended for guests.
     getCurrentUser()
       .then(({ user: currentUser }) => {
         if (!active) return
@@ -154,6 +163,7 @@ export function GuestGuard({ children }: { children: ReactNode }) {
         if (active) setCheckingSession(false)
       })
 
+    // Prevent updates or redirects after this guard unmounts.
     return () => {
       active = false
     }

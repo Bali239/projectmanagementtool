@@ -1,8 +1,11 @@
+"use client"
+
+import { LoadingOutlined } from "@ant-design/icons"
 import { Spin } from "antd"
 
 export default function LoadingState({ message, className = "min-h-72" }: { message: string; className?: string }) {
   return <div role="status" aria-live="polite" className={`flex flex-col items-center justify-center gap-3 text-sm text-slate-500 ${className}`}>
-    <Spin size="large" />
+    <Spin indicator={<LoadingOutlined spin />} size="large" />
     <span>{message}</span>
   </div>
 }
