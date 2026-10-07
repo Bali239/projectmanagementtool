@@ -51,7 +51,7 @@ export default function ForgotPasswordForm() {
         {mutation.error && <AuthError error={mutation.error} />}
         {submitted && (
           <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            If an account exists for that email, a reset link will be sent.
+            Reset link sent! Check your email for instructions to reset your password.
           </p>
         )}
         <AuthSubmit loading={mutation.isPending}>Send reset link</AuthSubmit>
