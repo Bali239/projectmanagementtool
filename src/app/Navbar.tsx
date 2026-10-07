@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "antd"
-import { ArrowUpRight, PanelsTopLeft, FileSpreadsheet  } from "lucide-react"
+import { PanelsTopLeft  } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
@@ -33,10 +33,10 @@ export default function Navbar() {
             shape="round"
             className="!h-10 !px-4 !text-sm !font-semibold shadow-sm sm:!px-5 [&.ant-btn-disabled]:!border-[#16796f] [&.ant-btn-disabled]:!bg-[#16796f] [&.ant-btn-disabled]:!text-white [&.ant-btn-disabled]:!opacity-100"
             disabled={loading}
-            onClick={() => router.push(user ? "/dashboard" : "/login")}
+            onClick={() => router.push(user ? "/workspaces" : "/login")}
           >
             <span className="inline-flex items-center gap-1.5">
-              {loading ? "Checking your session..." : user ? "Open workspace" : "Create workspace"}
+              {loading ? "Checking your session..." : user ? "Open workspaces" : "Create workspace"}
               
             </span>
           </Button>
