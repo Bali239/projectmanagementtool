@@ -13,7 +13,7 @@ import { useAppDispatch } from "@/store/hooks"
 import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
 import { fetchTaskStatusNotifications } from "@/lib/api/tasks"
-import { taskQueryKeys } from "@/lib/queryKeys"
+import { taskQueryKeys, workspaceQueryKeys } from "@/lib/queryKeys"
 import { API_BASE_URL } from "@/lib/api/client"
 import { io } from "socket.io-client"
 
@@ -47,7 +47,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const notificationsKey = taskQueryKeys.statusNotifications(workspace?.id)
   const notificationsQuery = useQuery({
     queryKey: notificationsKey,
-    queryFn: fetchTaskStatusNotifications,
+    queryFn: ({ queryKey }) => fetchTaskStatusNotifications(queryKey[1]),
     enabled: workspace?.role === "admin",
     staleTime: 30_000,
   })
@@ -207,8 +207,18 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       return
     }
     if (!key.startsWith("workspace:")) return
-    selectWorkspace(key.slice("workspace:".length))
-    void queryClient.invalidateQueries()
+    const nextWorkspaceId = key.slice("workspace:".length)
+    if (nextWorkspaceId === workspace?.id) return
+
+    // Discard the destination's cached view so the new workspace renders its loading state.
+    void queryClient.cancelQueries({ queryKey: taskQueryKeys.list(nextWorkspaceId) })
+    void queryClient.cancelQueries({ queryKey: taskQueryKeys.statusNotifications(nextWorkspaceId) })
+    void queryClient.cancelQueries({ queryKey: workspaceQueryKeys.members(nextWorkspaceId) })
+    void queryClient.cancelQueries({ queryKey: workspaceQueryKeys.invitations(nextWorkspaceId) })
+    queryClient.removeQueries({ queryKey: taskQueryKeys.list(nextWorkspaceId), exact: true })
+    queryClient.removeQueries({ queryKey: taskQueryKeys.statusNotifications(nextWorkspaceId), exact: true })
+    queryClient.removeQueries({ queryKey: ["workspace", nextWorkspaceId] })
+    selectWorkspace(nextWorkspaceId)
     router.replace(pathname.startsWith("/dashboard") ? pathname : "/dashboard")
   }
 

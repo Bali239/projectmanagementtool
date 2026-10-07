@@ -22,13 +22,13 @@ export default function DashboardPage() {
   const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null)
   const membersQuery = useQuery({
     queryKey: workspaceQueryKeys.memberSearch(workspace?.id, debouncedMemberSearch),
-    queryFn: () => searchWorkspaceMembers(debouncedMemberSearch),
+    queryFn: ({ queryKey }) => searchWorkspaceMembers(queryKey[4], queryKey[1]),
     enabled: !!workspace && isAdmin && debouncedMemberSearch.length >= 2,
     staleTime: 30_000,
   })
   const { data: tasks = [], isPending, isError, error } = useQuery({
     queryKey: taskQueryKeys.list(workspace?.id),
-    queryFn: () => fetchTasks(),
+    queryFn: ({ queryKey }) => fetchTasks(queryKey[1]),
     enabled: !!user && !!workspace,
   })
   useEffect(() => {

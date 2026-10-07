@@ -26,7 +26,7 @@ export default function TaskDetailModal() {
   const { activeTaskId, taskView } = useAppSelector((state) => state.tasks)
   const { data: tasks = [], isPending, isError, error } = useQuery({
     queryKey: taskQueryKeys.list(workspace?.id),
-    queryFn: () => fetchTasks(),
+    queryFn: ({ queryKey }) => fetchTasks(queryKey[1]),
     enabled: !!workspace && taskView === "details" && !!activeTaskId,
   })
   const task = tasks.find((item) => item.id === activeTaskId)

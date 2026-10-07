@@ -10,6 +10,11 @@ const apiClient = axios.create({
 
 export const ACTIVE_WORKSPACE_STORAGE_KEY = "letsdo.activeWorkspaceId"
 
+// Bind a request to the workspace used in its query key, avoiding switch-time races.
+export function workspaceRequestConfig(workspaceId?: string): Pick<AxiosRequestConfig, "headers"> {
+  return workspaceId ? { headers: { "X-Workspace-Id": workspaceId } } : {}
+}
+
 // Attach the selected workspace to requests made in the browser.
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {

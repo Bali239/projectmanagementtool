@@ -1,5 +1,5 @@
 import type { BoardTask, TaskStatus } from "@/store/tasksSlice"
-import { apiRequest } from "@/lib/api/client"
+import { apiRequest, workspaceRequestConfig } from "@/lib/api/client"
 
 // Payload accepted by task create and update endpoints.
 type TaskInput = {
@@ -21,13 +21,16 @@ export type TaskStatusNotification = {
 }
 
 // Task API functions return data in the shapes consumed by the client store and queries.
-export function fetchTasks(titleQuery = "") {
+export function fetchTasks(workspaceId?: string, titleQuery = "") {
   const query = titleQuery.trim()
-  return apiRequest<BoardTask[]>(query ? `/tasks?q=${encodeURIComponent(query)}` : "/tasks")
+  return apiRequest<BoardTask[]>(
+    query ? `/tasks?q=${encodeURIComponent(query)}` : "/tasks",
+    workspaceRequestConfig(workspaceId),
+  )
 }
 
-export function fetchTaskStatusNotifications() {
-  return apiRequest<TaskStatusNotification[]>("/tasks/status-notifications")
+export function fetchTaskStatusNotifications(workspaceId?: string) {
+  return apiRequest<TaskStatusNotification[]>("/tasks/status-notifications", workspaceRequestConfig(workspaceId))
 }
 
 export function createTask(input: TaskInput) {

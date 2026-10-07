@@ -37,7 +37,7 @@ export default function TaskFormFields({ form, currentAssignee }: { form: FormIn
   }, [memberSearch])
   const membersQuery = useQuery({
     queryKey: workspaceQueryKeys.memberSearch(workspace?.id, debouncedSearch),
-    queryFn: () => searchWorkspaceMembers(debouncedSearch),
+    queryFn: ({ queryKey }) => searchWorkspaceMembers(queryKey[4], queryKey[1]),
     enabled: workspace?.role === "admin" && debouncedSearch.length >= 2,
     staleTime: 30_000,
   })

@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/client"
+import { apiRequest, workspaceRequestConfig } from "@/lib/api/client"
 
 // Response types shared by workspace API calls and UI components.
 export type WorkspaceSummary = {
@@ -82,12 +82,15 @@ export function deleteWorkspace(workspaceId: string) {
   return apiRequest<void>(`/workspaces/${workspaceId}`, { method: "DELETE" })
 }
 
-export function fetchWorkspaceMembers() {
-  return apiRequest<WorkspaceMember[]>("/workspaces/members")
+export function fetchWorkspaceMembers(workspaceId?: string) {
+  return apiRequest<WorkspaceMember[]>("/workspaces/members", workspaceRequestConfig(workspaceId))
 }
 
-export function searchWorkspaceMembers(search: string) {
-  return apiRequest<WorkspaceMember[]>(`/workspaces/members?search=${encodeURIComponent(search)}`)
+export function searchWorkspaceMembers(search: string, workspaceId?: string) {
+  return apiRequest<WorkspaceMember[]>(
+    `/workspaces/members?search=${encodeURIComponent(search)}`,
+    workspaceRequestConfig(workspaceId),
+  )
 }
 
 export function removeWorkspaceMember(userId: string) {
@@ -98,8 +101,8 @@ export function leaveWorkspace(workspaceId: string) {
   return apiRequest<void>("/workspaces/members/me", { method: "DELETE", headers: { "X-Workspace-Id": workspaceId } })
 }
 
-export function fetchWorkspaceInvitations() {
-  return apiRequest<WorkspaceInvitation[]>("/workspaces/invitations")
+export function fetchWorkspaceInvitations(workspaceId?: string) {
+  return apiRequest<WorkspaceInvitation[]>("/workspaces/invitations", workspaceRequestConfig(workspaceId))
 }
 
 export function createWorkspaceInvitation(email: string) {

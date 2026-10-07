@@ -33,7 +33,7 @@ export default function EditTaskModal() {
   const [form] = Form.useForm<TaskFormValues>()
   const { data: tasks = [], isError, error } = useQuery({
     queryKey: taskQueryKeys.list(workspace?.id),
-    queryFn: () => fetchTasks(),
+    queryFn: ({ queryKey }) => fetchTasks(queryKey[1]),
     enabled: !!workspace && taskView === "edit" && !!activeTaskId,
   })
   const task = tasks.find((item) => item.id === activeTaskId)

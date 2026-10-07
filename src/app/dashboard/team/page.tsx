@@ -28,12 +28,12 @@ export default function TeamPage() {
   const invitationKey = workspaceQueryKeys.invitations(workspace?.id)
   const membersQuery = useQuery({
     queryKey: memberKey,
-    queryFn: fetchWorkspaceMembers,
+    queryFn: ({ queryKey }) => fetchWorkspaceMembers(queryKey[1]),
     enabled: !!workspace,
   })
   const invitationsQuery = useQuery({
     queryKey: invitationKey,
-    queryFn: fetchWorkspaceInvitations,
+    queryFn: ({ queryKey }) => fetchWorkspaceInvitations(queryKey[1]),
     enabled: !!workspace && isAdmin,
   })
   const inviteMutation = useMutation({
