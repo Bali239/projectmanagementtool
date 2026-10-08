@@ -1,9 +1,7 @@
-import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight, CalendarDays, Check, ClipboardList, Eye, MoveRight } from "lucide-react"
-import dashboardPreview from "./frontdashboard.png"
+import { CalendarDays, ClipboardList, MoveRight } from "lucide-react"
 import Navbar from "./Navbar"
 import PublicFooter from "./Footer"
+import SlicedRevealCarousel from "@/components/pixel-perfect/sliced-reveal-carousel"
 
 const benefits = [
   { icon: ClipboardList, title: "Keep every task together", text: "Add a clear title, useful notes, and the details your team needs to act." },
@@ -32,18 +30,8 @@ export default function Home() {
             
           </div>
 
-          <figure className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none relative mx-auto mt-12 max-w-6xl sm:mt-16" style={{ animationDelay: "110ms" }}>
-            <div aria-hidden="true" className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-emerald-200/70 via-white to-lime-100/70 blur-xl sm:-inset-7" />
-            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_28px_80px_-35px_rgba(15,23,42,0.32)] sm:rounded-2xl">
-              <Image src={dashboardPreview} alt="LetsDo task board showing tasks grouped into To do, In review, Pending, and Completed columns" priority sizes="(max-width: 768px) 100vw, 1200px" className="h-auto w-full" />
-              <div aria-hidden="true" className="absolute left-[4.5%] top-[2%] flex h-[6%] w-[8%] items-center gap-[4%] bg-white">
-                <span className="grid size-[24%] shrink-0 place-items-center rounded-[20%] bg-emerald-700 text-white"><Check className="size-[70%]" /></span>
-                <span className="whitespace-nowrap text-[clamp(5px,0.75vw,10px)] font-bold text-slate-900">LetsDo</span>
-              </div>
-            </div>
-            <figcaption className="mt-3 text-center text-xs text-slate-500 sm:text-sm">A quick view of tasks, status, notes, and due dates in one workspace.</figcaption>
-          </figure>
         </div>
+        <SlicedRevealCarousel/>
       </section>
 
       <section className="border-y border-emerald-100 bg-[#edf5ef] px-5 py-14 sm:px-8 sm:py-16">

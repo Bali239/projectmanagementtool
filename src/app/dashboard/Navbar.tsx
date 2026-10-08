@@ -271,8 +271,8 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
             placement="bottom"
             open={notificationsOpen}
             onClose={() => setNotificationsOpen(false)}
-            height="min(82dvh, 38rem)"
-            width="100vw"
+            size="min(82dvh, 38rem)"
+            style={{ width: "100vw" }}
             styles={{ body: { padding: "12px 16px max(16px, env(safe-area-inset-bottom))", overflow: "hidden" } }}
           >
             {notificationContent}
