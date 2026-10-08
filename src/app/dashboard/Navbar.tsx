@@ -95,6 +95,11 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     }
     socket.on("connect", refreshRealtimeData)
     socket.on("tasks:changed", refreshRealtimeData)
+    if (workspace.role === "admin") {
+      socket.on("task-status:changed", () => {
+        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+      })
+    }
     return () => { socket.disconnect() }
   }, [queryClient, user, workspace?.id, workspace?.role])
 
