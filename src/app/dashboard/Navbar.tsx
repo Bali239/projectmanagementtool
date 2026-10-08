@@ -43,7 +43,7 @@ type NavbarProps = {
 }
 
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
-  const { modal } = App.useApp()
+  const { modal, message } = App.useApp()
   const router = useRouter()
   const pathname = usePathname()
   const queryClient = useQueryClient()
@@ -114,12 +114,13 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       }
     })
     if (workspace.role === "admin") {
-      socket.on("task-status:changed", () => {
+      socket.on("task-status:changed", (change: { taskTitle: string; fromStatus: string; toStatus: string }) => {
         void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+        message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
       })
     }
     return () => { socket.disconnect() }
-  }, [queryClient, user, workspace?.id, workspace?.role])
+  }, [queryClient, user, workspace?.id, workspace?.role, message])
 
   const notifications = notificationsQuery.data ?? []
   const seenNotificationIds = new Set(seenNotificationState.workspaceId === workspace?.id ? seenNotificationState.ids : [])
