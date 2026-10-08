@@ -22,6 +22,26 @@ import { io } from "socket.io-client"
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
   || (/^https?:\/\//i.test(API_BASE_URL) ? API_BASE_URL.replace(/\/api\/?$/, "") : null)
 
+function sanitizeSocketDiagnostic(value: unknown, depth = 0): unknown {
+  if (typeof value === "string") {
+    return value
+      .replace(/\b(bearer)\s+\S+/gi, "$1 [REDACTED]")
+      .replace(/\b(?:cookie|set-cookie|authorization)\s*:\s*[^\r\n]*/gi, "[REDACTED]")
+      .replace(/((?:access|refresh)?_?token|cookie|authorization|password|secret)(["']?\s*[:=]\s*["']?)[^&\s"',}]+/gi, "$1$2[REDACTED]")
+      .replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED]")
+  }
+  if (value === null || typeof value !== "object") return value
+  if (depth >= 4) return "[Truncated]"
+  if (Array.isArray(value)) return value.slice(0, 20).map((item) => sanitizeSocketDiagnostic(item, depth + 1))
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !/(?:auth|token|jwt|cookie|credential|secret|password|header)/i.test(key))
+      .slice(0, 20)
+      .map(([key, item]) => [key, sanitizeSocketDiagnostic(item, depth + 1)]),
+  )
+}
+
 const statusLabels: Record<string, string> = {
   todo: "To do",
   "in-progress": "In progress",
@@ -95,8 +115,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       console.error("Socket.IO is not configured. Set NEXT_PUBLIC_SOCKET_URL to the Render service origin and redeploy the frontend.")
       return
     }
-    console.log("[SOCKET] Creating dashboard connection", { userId, workspaceId, role: workspaceRole })
+    console.log("[SOCKET] Creating connection", { userId, workspaceId, workspaceRole })
     const socket = io(SOCKET_URL, {
+      autoConnect: false,
       withCredentials: true,
       transports: ["websocket"],
       reconnection: true,
@@ -117,24 +138,47 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       },
     })
     let activeSocketId: string | undefined
-    const handleConnectError = (error: Error) => {
-      console.error("Socket.IO connection failed:", error.message)
+    const connectionDetails = (reason?: string) => ({
+      socketId: socket.id ?? activeSocketId,
+      userId,
+      workspaceId,
+      workspaceRole,
+      ...(reason ? { reason } : {}),
+    })
+    const handleConnectError = (error: Error & { description?: unknown; context?: unknown }) => {
+      console.error("[SOCKET] Connect error", {
+        ...connectionDetails(),
+        message: sanitizeSocketDiagnostic(error.message),
+        description: sanitizeSocketDiagnostic(error.description),
+        context: sanitizeSocketDiagnostic(error.context),
+      })
     }
     const handleDisconnect = (reason: string) => {
-      console.log("[SOCKET] Disconnect:", activeSocketId, reason)
-      activeSocketId = undefined
+      console.log("[SOCKET] Disconnect", connectionDetails(reason))
     }
     const handleReconnectAttempt = (attempt: number) => {
-      console.warn("[SOCKET] Reconnect attempt:", attempt, { userId, workspaceId })
+      console.warn("[SOCKET] Reconnect attempt", { ...connectionDetails(), attempt })
     }
     const handleReconnectError = (error: Error) => {
-      console.error("[SOCKET] Reconnect error:", error.message, { userId, workspaceId })
+      console.error("[SOCKET] Reconnect error", {
+        ...connectionDetails(),
+        message: sanitizeSocketDiagnostic(error.message),
+      })
     }
     const handleReconnect = (attempt: number) => {
-      console.log("[SOCKET] Reconnected:", attempt, { userId, workspaceId, socketId: socket.id })
+      console.log("[SOCKET] Reconnected", { ...connectionDetails(), attempt })
+    }
+    const handleManagerOpen = () => {
+      console.log("[SOCKET] Manager opened", connectionDetails())
     }
     const handleManagerClose = (reason: string) => {
-      console.warn("[SOCKET] Manager closed:", reason, { userId, workspaceId })
+      console.warn("[SOCKET] Manager closed", connectionDetails(reason))
+    }
+    const handleManagerError = (error: Error) => {
+      console.error("[SOCKET] Manager error", {
+        ...connectionDetails(),
+        message: sanitizeSocketDiagnostic(error.message),
+      })
     }
     const invalidateRealtimeQuery = (queryKey: readonly unknown[]) =>
       queryClient.invalidateQueries({ queryKey }, { cancelRefetch: false, throwOnError: true })
@@ -149,7 +193,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     }
     const handleConnect = () => {
       activeSocketId = socket.id
-      console.log("[SOCKET] Connected:", activeSocketId, "workspace:", workspaceId, "role:", workspaceRole)
+      console.log("[SOCKET] Connected", connectionDetails())
       refreshRealtimeData()
     }
     const handleTasksChanged = () => refreshRealtimeData()
@@ -187,8 +231,13 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     socket.io.on("reconnect_attempt", handleReconnectAttempt)
     socket.io.on("reconnect_error", handleReconnectError)
     socket.io.on("reconnect", handleReconnect)
+    socket.io.on("open", handleManagerOpen)
     socket.io.on("close", handleManagerClose)
+    socket.io.on("error", handleManagerError)
+    socket.connect()
+
     return () => {
+      console.log("[SOCKET] Effect cleanup", connectionDetails("React effect cleanup"))
       socket.off("connect_error", handleConnectError)
       socket.off("connect", handleConnect)
       socket.off("disconnect", handleDisconnect)
@@ -198,8 +247,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       socket.io.off("reconnect_attempt", handleReconnectAttempt)
       socket.io.off("reconnect_error", handleReconnectError)
       socket.io.off("reconnect", handleReconnect)
+      socket.io.off("open", handleManagerOpen)
       socket.io.off("close", handleManagerClose)
-      console.log("[SOCKET] Disposing dashboard connection", { socketId: activeSocketId, userId, workspaceId })
+      socket.io.off("error", handleManagerError)
       socket.disconnect()
     }
   }, [queryClient, userId, workspaceId, workspaceRole])
