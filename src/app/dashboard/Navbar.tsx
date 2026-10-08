@@ -4,7 +4,7 @@ import { App, Avatar, Badge, Button, Drawer, Dropdown, Empty, Input, Popover, ty
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowRight, Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X, Bell } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
@@ -43,8 +43,7 @@ type NavbarProps = {
 }
 
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
-  const { modal, message } = App.useApp()
-  const messageRef = useRef(message)
+  const { modal } = App.useApp()
   const router = useRouter()
   const pathname = usePathname()
   const queryClient = useQueryClient()
@@ -73,10 +72,6 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       router.replace("/login")
     },
   })
-
-  useEffect(() => {
-    messageRef.current = message
-  }, [message])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 500)
@@ -159,13 +154,24 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
         void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.invitations(workspaceId) })
       }
     }
-    const handleTaskStatusChanged = (change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string }) => {
+    const handleTaskStatusChanged = (
+      change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string },
+      acknowledge?: (receipt: { socketId: string | undefined; role: string; boardRefreshed: boolean; notificationsRefreshed: boolean }) => void,
+    ) => {
       console.log(workspaceRole === "admin" ? "[ADMIN SOCKET] task_status_changed RECEIVED" : "[SOCKET] task_status_changed RECEIVED", change)
       console.log("[QUERY] Invalidating tasks", taskQueryKeys.list(workspaceId))
-      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
+      const refreshes = [queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })]
       if (workspaceRole === "admin") {
-        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
+        refreshes.push(queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) }))
       }
+      void Promise.allSettled(refreshes).then((results) => {
+        const boardRefreshed = results[0]?.status === "fulfilled"
+        const notificationsRefreshed = workspaceRole !== "admin" || results[1]?.status === "fulfilled"
+        results.forEach((result) => {
+          if (result.status === "rejected") console.error("[QUERY] Refresh failed after socket event:", result.reason)
+        })
+        acknowledge?.({ socketId: socket.id, role: workspaceRole, boardRefreshed, notificationsRefreshed })
+      })
     }
     socket.on("connect_error", handleConnectError)
     socket.on("connect", handleConnect)
