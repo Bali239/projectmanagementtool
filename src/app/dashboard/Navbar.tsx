@@ -147,7 +147,6 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
       if (workspaceRole === "admin") {
         void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
-        messageRef.current.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
       }
     }
     socket.on("connect_error", handleConnectError)
