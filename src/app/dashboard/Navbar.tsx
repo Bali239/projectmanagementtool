@@ -87,7 +87,11 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   }, [])
 
   useEffect(() => {
-    if (!user || !workspace || !SOCKET_URL) return
+    if (!user || !workspace) return
+    if (!SOCKET_URL) {
+      console.error("Socket.IO is not configured. Set NEXT_PUBLIC_SOCKET_URL to the Render service origin and redeploy the frontend.")
+      return
+    }
     const socket = io(SOCKET_URL, {
       withCredentials: true,
       // The session cookie belongs to the frontend domain and is not sent to
@@ -96,8 +100,14 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       auth: (callback) => {
         void apiRequest<{ token: string }>("/auth/socket-token")
           .then(({ token }) => callback({ workspaceId: workspace.id, token }))
-          .catch(() => callback({ workspaceId: workspace.id }))
+          .catch((error: unknown) => {
+            console.error("Could not get a Socket.IO auth token:", error)
+            callback({ workspaceId: workspace.id, token: null })
+          })
       },
+    })
+    socket.on("connect_error", (error) => {
+      console.error("Socket.IO connection failed:", error.message)
     })
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
