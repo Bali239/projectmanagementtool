@@ -14,7 +14,7 @@ import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
 import { fetchTaskStatusNotifications } from "@/lib/api/tasks"
 import { taskQueryKeys, workspaceQueryKeys } from "@/lib/queryKeys"
-import { API_BASE_URL } from "@/lib/api/client"
+import { API_BASE_URL, apiRequest } from "@/lib/api/client"
 import { io } from "socket.io-client"
 
 // Vercel's /api rewrite only proxies HTTP requests. Socket.IO needs a direct
@@ -90,7 +90,14 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     if (!user || !workspace || !SOCKET_URL) return
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      auth: { workspaceId: workspace.id },
+      // The session cookie belongs to the frontend domain and is not sent to
+      // the separate Render domain. Fetch a short lived socket credential via
+      // the same origin API each time Socket.IO connects or reconnects.
+      auth: (callback) => {
+        void apiRequest<{ token: string }>("/auth/socket-token")
+          .then(({ token }) => callback({ workspaceId: workspace.id, token }))
+          .catch(() => callback({ workspaceId: workspace.id }))
+      },
     })
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
