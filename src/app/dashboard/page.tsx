@@ -28,7 +28,12 @@ export default function DashboardPage() {
   })
   const { data: tasks = [], isPending, isError, error } = useQuery({
     queryKey: taskQueryKeys.list(workspace?.id),
-    queryFn: ({ queryKey }) => fetchTasks(queryKey[1]),
+    queryFn: async ({ queryKey }) => {
+      console.log("[QUERY] Fetching task list:", queryKey)
+      const updatedTasks = await fetchTasks(queryKey[1])
+      console.log("[QUERY] Task list refreshed:", { workspaceId: queryKey[1], count: updatedTasks.length })
+      return updatedTasks
+    },
     enabled: !!user && !!workspace,
   })
   useEffect(() => {

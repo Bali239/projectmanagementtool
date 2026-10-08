@@ -109,6 +109,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const handleConnectError = (error: Error) => {
       console.error("Socket.IO connection failed:", error.message)
     }
+    const handleDisconnect = (reason: string) => {
+      console.log("[SOCKET] Disconnect:", socket.id, reason)
+    }
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
       if (workspace.role === "admin") {
@@ -116,7 +119,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       }
     }
     const handleConnect = () => {
-      console.log("Socket connected:", socket.id)
+      console.log("[SOCKET] Connected:", socket.id, "workspace:", workspace.id, "role:", workspace.role)
       refreshRealtimeData()
     }
     const handleTasksChanged = () => refreshRealtimeData()
@@ -127,20 +130,24 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       }
     }
     const handleTaskStatusChanged = (change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string }) => {
-      console.log("Admin received task status event:", change)
-      // Task data lives in TanStack Query; invalidation refreshes the board from the server.
+      console.log("[SOCKET] Received task-status:changed:", change)
+      console.log("[QUERY] Invalidating task queries:", taskQueryKeys.list(workspace.id))
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
-      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
-      message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
+      if (workspace.role === "admin") {
+        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+        message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
+      }
     }
     socket.on("connect_error", handleConnectError)
     socket.on("connect", handleConnect)
+    socket.on("disconnect", handleDisconnect)
     socket.on("tasks:changed", handleTasksChanged)
     socket.on("workspace:members-changed", handleMembersChanged)
-    if (workspace.role === "admin") socket.on("task-status:changed", handleTaskStatusChanged)
+    socket.on("task-status:changed", handleTaskStatusChanged)
     return () => {
       socket.off("connect_error", handleConnectError)
       socket.off("connect", handleConnect)
+      socket.off("disconnect", handleDisconnect)
       socket.off("tasks:changed", handleTasksChanged)
       socket.off("workspace:members-changed", handleMembersChanged)
       socket.off("task-status:changed", handleTaskStatusChanged)
