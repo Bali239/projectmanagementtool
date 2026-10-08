@@ -4,7 +4,7 @@ import { App, Avatar, Badge, Button, Drawer, Dropdown, Empty, Input, Popover, ty
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowRight, Building2, Check, ChevronDown, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, X, Bell } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { logout } from "@/lib/api/auth"
@@ -44,6 +44,7 @@ type NavbarProps = {
 
 export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: NavbarProps) {
   const { modal, message } = App.useApp()
+  const messageRef = useRef(message)
   const router = useRouter()
   const pathname = usePathname()
   const queryClient = useQueryClient()
@@ -74,6 +75,10 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   })
 
   useEffect(() => {
+    messageRef.current = message
+  }, [message])
+
+  useEffect(() => {
     const timeout = window.setTimeout(() => dispatch(setTaskSearchQuery(search.trim())), 500)
     return () => window.clearTimeout(timeout)
   }, [dispatch, search])
@@ -95,6 +100,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       console.error("Socket.IO is not configured. Set NEXT_PUBLIC_SOCKET_URL to the Render service origin and redeploy the frontend.")
       return
     }
+    console.log("[SOCKET] Creating dashboard connection", { userId, workspaceId, role: workspaceRole })
     const socket = io(SOCKET_URL, {
       withCredentials: true,
       // The session cookie belongs to the frontend domain and is not sent to
@@ -109,11 +115,13 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
           })
       },
     })
+    let activeSocketId: string | undefined
     const handleConnectError = (error: Error) => {
       console.error("Socket.IO connection failed:", error.message)
     }
     const handleDisconnect = (reason: string) => {
-      console.log("[SOCKET] Disconnect:", socket.id, reason)
+      console.log("[SOCKET] Disconnect:", activeSocketId, reason)
+      activeSocketId = undefined
     }
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
@@ -122,7 +130,8 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       }
     }
     const handleConnect = () => {
-      console.log("[SOCKET] Connected:", socket.id, "workspace:", workspaceId, "role:", workspaceRole)
+      activeSocketId = socket.id
+      console.log("[SOCKET] Connected:", activeSocketId, "workspace:", workspaceId, "role:", workspaceRole)
       refreshRealtimeData()
     }
     const handleTasksChanged = () => refreshRealtimeData()
@@ -138,7 +147,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
       if (workspaceRole === "admin") {
         void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
-        message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
+        messageRef.current.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
       }
     }
     socket.on("connect_error", handleConnectError)
@@ -154,9 +163,10 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       socket.off("tasks:changed", handleTasksChanged)
       socket.off("workspace:members-changed", handleMembersChanged)
       socket.off("task_status_changed", handleTaskStatusChanged)
+      console.log("[SOCKET] Disposing dashboard connection", { socketId: activeSocketId, userId, workspaceId })
       socket.disconnect()
     }
-  }, [queryClient, userId, workspaceId, workspaceRole, message])
+  }, [queryClient, userId, workspaceId, workspaceRole])
 
   const notifications = notificationsQuery.data ?? []
   const seenNotificationIds = new Set(seenNotificationState.workspaceId === workspace?.id ? seenNotificationState.ids : [])
