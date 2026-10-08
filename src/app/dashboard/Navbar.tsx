@@ -104,6 +104,11 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const socket = io(SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
       // The session cookie belongs to the frontend domain and is not sent to
       // the separate Render domain. Fetch a short lived socket credential via
       // the same origin API each time Socket.IO connects or reconnects.
@@ -123,6 +128,18 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const handleDisconnect = (reason: string) => {
       console.log("[SOCKET] Disconnect:", activeSocketId, reason)
       activeSocketId = undefined
+    }
+    const handleReconnectAttempt = (attempt: number) => {
+      console.warn("[SOCKET] Reconnect attempt:", attempt, { userId, workspaceId })
+    }
+    const handleReconnectError = (error: Error) => {
+      console.error("[SOCKET] Reconnect error:", error.message, { userId, workspaceId })
+    }
+    const handleReconnect = (attempt: number) => {
+      console.log("[SOCKET] Reconnected:", attempt, { userId, workspaceId, socketId: socket.id })
+    }
+    const handleManagerClose = (reason: string) => {
+      console.warn("[SOCKET] Manager closed:", reason, { userId, workspaceId })
     }
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
@@ -156,6 +173,10 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     socket.on("tasks:changed", handleTasksChanged)
     socket.on("workspace:members-changed", handleMembersChanged)
     socket.on("task_status_changed", handleTaskStatusChanged)
+    socket.io.on("reconnect_attempt", handleReconnectAttempt)
+    socket.io.on("reconnect_error", handleReconnectError)
+    socket.io.on("reconnect", handleReconnect)
+    socket.io.on("close", handleManagerClose)
     return () => {
       socket.off("connect_error", handleConnectError)
       socket.off("connect", handleConnect)
@@ -163,6 +184,10 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       socket.off("tasks:changed", handleTasksChanged)
       socket.off("workspace:members-changed", handleMembersChanged)
       socket.off("task_status_changed", handleTaskStatusChanged)
+      socket.io.off("reconnect_attempt", handleReconnectAttempt)
+      socket.io.off("reconnect_error", handleReconnectError)
+      socket.io.off("reconnect", handleReconnect)
+      socket.io.off("close", handleManagerClose)
       console.log("[SOCKET] Disposing dashboard connection", { socketId: activeSocketId, userId, workspaceId })
       socket.disconnect()
     }
