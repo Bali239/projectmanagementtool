@@ -106,30 +106,46 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
           })
       },
     })
-    socket.on("connect_error", (error) => {
+    const handleConnectError = (error: Error) => {
       console.error("Socket.IO connection failed:", error.message)
-    })
+    }
     const refreshRealtimeData = () => {
       void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
       if (workspace.role === "admin") {
         void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
       }
     }
-    socket.on("connect", refreshRealtimeData)
-    socket.on("tasks:changed", refreshRealtimeData)
-    socket.on("workspace:members-changed", () => {
+    const handleConnect = () => {
+      console.log("Socket connected:", socket.id)
+      refreshRealtimeData()
+    }
+    const handleTasksChanged = () => refreshRealtimeData()
+    const handleMembersChanged = () => {
       void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.members(workspace.id) })
       if (workspace.role === "admin") {
         void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.invitations(workspace.id) })
       }
-    })
-    if (workspace.role === "admin") {
-      socket.on("task-status:changed", (change: { taskTitle: string; fromStatus: string; toStatus: string }) => {
-        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
-        message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
-      })
     }
-    return () => { socket.disconnect() }
+    const handleTaskStatusChanged = (change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string }) => {
+      console.log("Admin received task status event:", change)
+      // Task data lives in TanStack Query; invalidation refreshes the board from the server.
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+      message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
+    }
+    socket.on("connect_error", handleConnectError)
+    socket.on("connect", handleConnect)
+    socket.on("tasks:changed", handleTasksChanged)
+    socket.on("workspace:members-changed", handleMembersChanged)
+    if (workspace.role === "admin") socket.on("task-status:changed", handleTaskStatusChanged)
+    return () => {
+      socket.off("connect_error", handleConnectError)
+      socket.off("connect", handleConnect)
+      socket.off("tasks:changed", handleTasksChanged)
+      socket.off("workspace:members-changed", handleMembersChanged)
+      socket.off("task-status:changed", handleTaskStatusChanged)
+      socket.disconnect()
+    }
   }, [queryClient, user, workspace?.id, workspace?.role, message])
 
   const notifications = notificationsQuery.data ?? []
