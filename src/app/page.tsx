@@ -1,13 +1,7 @@
-import { CalendarDays, ClipboardList, MoveRight } from "lucide-react"
 import Navbar from "./Navbar"
 import PublicFooter from "./Footer"
 import SlicedRevealCarousel from "@/components/pixel-perfect/sliced-reveal-carousel"
-
-const benefits = [
-  { icon: ClipboardList, title: "Keep every task together", text: "Add a clear title, useful notes, and the details your team needs to act." },
-  { icon: MoveRight, title: "See work move forward", text: "Organize tasks by status and move them across the board as work changes." },
-  { icon: CalendarDays, title: "Keep dates in sight", text: "Add due dates and times so upcoming work stays easy to spot." },
-]
+import RadialCarousel from "@/components/pixel-perfect/radial-carousel"
 
 export default function Home() {
   return (
@@ -41,20 +35,15 @@ export default function Home() {
             <h2 className="text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-4xl">Less time wondering about work. More time moving it forward.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">The purpose is simple: make day-to-day project work easier to understand. Give every task a place, make ownership and timing visible, and help people choose a useful next step without digging through scattered notes.</p>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {benefits.map(({ icon: Icon, title, text }, index) => (
-              <article key={title} className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out motion-reduce:animate-none rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md" style={{ animationDelay: `${index * 90}ms` }}>
-                <span className="mb-6 grid size-11 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><Icon size={20} /></span>
-                <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-              </article>
-            ))}
-          </div>
+          
           
         </div>
       </section>
 
     </main>
+    {/* <div className="bg-[#edf5ef]">
+      <RadialCarousel />
+    </div> */}
     <PublicFooter />
     </div>
   )

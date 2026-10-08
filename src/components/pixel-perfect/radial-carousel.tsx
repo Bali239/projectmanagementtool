@@ -64,8 +64,7 @@ const RadialCarousel = () => {
       ref={containerRef}
       className="relative left-1/2 mt-12 h-[80vh] w-screen -translate-x-1/2 select-none overflow-hidden sm:mt-16"
     >
-      <div className="pointer-events-none absolute left-1/2 top-0 h-full -translate-x-1/2 border-l border-dashed border-neutral-300" />
-
+      
       {SLIDES.map((s, i) => (
         <div
           key={i}
