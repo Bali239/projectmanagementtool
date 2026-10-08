@@ -51,8 +51,8 @@ const SlicedRevealCarousel = () => {
   const slide = SLIDES[index];
 
   return (
-    <div className="relative flex w-full items-center justify-center overflow-hidden py-8">
-      <div className="relative aspect-[1366/633] w-[min(1100px,92%)] overflow-hidden rounded-2xl bg-white">
+    <div className="relative left-1/2 flex w-screen -translate-x-1/2 items-center justify-center overflow-hidden py-3 sm:py-6">
+      <div className="relative aspect-[1366/633] w-full overflow-hidden border-y border-emerald-100 bg-[#f7faf8] shadow-[0_20px_55px_-36px_rgba(6,78,59,0.5)] sm:w-[min(1100px,92%)] sm:rounded-2xl sm:border">
         <AnimatePresence initial={false} custom={dir}>
           <motion.div
             key={index}
@@ -73,8 +73,8 @@ const SlicedRevealCarousel = () => {
                   style={{
                     width: `${STRIPS * 100}%`,
                     marginLeft: `${-s * 100}%`,
-                    backgroundColor: "#fff",
-                    backgroundImage: `linear-gradient(to top, rgba(2, 6, 23, 0.25), transparent 48%), url("${slide.image}")`,
+                    backgroundColor: "#f7faf8",
+                    backgroundImage: `linear-gradient(to top, rgba(6, 78, 59, 0.12), transparent 48%), url("${slide.image}")`,
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "contain",
@@ -85,7 +85,7 @@ const SlicedRevealCarousel = () => {
           </motion.div>
         </AnimatePresence>
 
-        <div className="absolute bottom-6 left-7">
+        <div className="absolute bottom-1 left-1">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={index}
@@ -96,38 +96,38 @@ const SlicedRevealCarousel = () => {
                 transition: { duration: 0.6, ease: EASE, delay: 0.35 },
               }}
               exit={{ y: -18, opacity: 0, transition: { duration: 0.3 } }}
-              className="rounded-lg border border-white/20 bg-slate-950/75 px-3 py-2 text-white shadow-lg backdrop-blur-sm"
+              className="rounded-lg border border-emerald-100 bg-white/55 px-1.5 py-1 text-slate-900 shadow-lg backdrop-blur-sm sm:rounded-lg sm:px-3 sm:py-2"
             >
-              <p className="text-[10px] uppercase tracking-[0.3em] opacity-60">
+              <p className="text-[7px] font-semibold uppercase tracking-[0.12em] text-emerald-800 sm:text-[10px] sm:tracking-[0.3em]">
                 {slide.tag}
               </p>
-              <h3 className="mt-1 text-3xl font-semibold tracking-tight">
+              <h3 className="mt-0.5 text-xs font-semibold tracking-tight sm:mt-1 sm:text-3xl">
                 {slide.title}
               </h3>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="absolute bottom-6 right-7 flex items-center gap-2">
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 sm:bottom-6 sm:right-7 sm:gap-2">
           <button
             type="button"
             aria-label="Previous slide"
             onClick={() => paginate(-1)}
-            className="grid size-9 place-items-center rounded-full bg-[#151515] text-white transition-colors hover:bg-white hover:text-black"
+            className="grid size-6 place-items-center rounded-full bg-emerald-700 text-white transition-colors hover:bg-emerald-800 sm:size-9"
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-3 sm:size-4" />
           </button>
           <button
             type="button"
             aria-label="Next slide"
             onClick={() => paginate(1)}
-            className="grid size-9 place-items-center rounded-full bg-[#151515] text-white transition-colors hover:bg-white hover:text-black"
+            className="grid size-6 place-items-center rounded-full bg-emerald-700 text-white transition-colors hover:bg-emerald-800 sm:size-9"
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-3 sm:size-4" />
           </button>
         </div>
 
-        <div className="absolute left-5 top-4 flex gap-1.5 rounded-full bg-[#151515] px-2 py-2">
+        {/* <div className="absolute left-0 top-0 flex gap-1 rounded-full border border-emerald-100 bg-white/95 px-1.5 py-1 shadow-sm sm:left-5 sm:top-4 sm:gap-1.5 sm:px-2 sm:py-2">
           {SLIDES.map((s, i) => (
             <button
               key={s.title}
@@ -135,11 +135,11 @@ const SlicedRevealCarousel = () => {
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => paginate(i - index)}
               className={`h-1 rounded-full transition-all duration-500 ${
-                i === index ? "w-8 bg-white" : "w-3 bg-white/30 hover:bg-white/60"
+                i === index ? "w-5 bg-emerald-700 sm:w-8" : "w-1.5 bg-emerald-200 hover:bg-emerald-400 sm:w-3"
               }`}
             />
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );
