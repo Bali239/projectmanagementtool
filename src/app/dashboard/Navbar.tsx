@@ -49,6 +49,9 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
   const { user, workspace, workspaces, refreshWorkspaces, selectWorkspace } = useAuth()
+  const userId = user?.uid
+  const workspaceId = workspace?.id
+  const workspaceRole = workspace?.role
   const notificationsKey = taskQueryKeys.statusNotifications(workspace?.id)
   const notificationsQuery = useQuery({
     queryKey: notificationsKey,
@@ -87,7 +90,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   }, [])
 
   useEffect(() => {
-    if (!user || !workspace) return
+    if (!userId || !workspaceId || !workspaceRole) return
     if (!SOCKET_URL) {
       console.error("Socket.IO is not configured. Set NEXT_PUBLIC_SOCKET_URL to the Render service origin and redeploy the frontend.")
       return
@@ -99,10 +102,10 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       // the same origin API each time Socket.IO connects or reconnects.
       auth: (callback) => {
         void apiRequest<{ token: string }>("/auth/socket-token")
-          .then(({ token }) => callback({ workspaceId: workspace.id, token }))
+          .then(({ token }) => callback({ workspaceId, token }))
           .catch((error: unknown) => {
             console.error("Could not get a Socket.IO auth token:", error)
-            callback({ workspaceId: workspace.id, token: null })
+            callback({ workspaceId, token: null })
           })
       },
     })
@@ -113,28 +116,28 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
       console.log("[SOCKET] Disconnect:", socket.id, reason)
     }
     const refreshRealtimeData = () => {
-      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
-      if (workspace.role === "admin") {
-        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
+      if (workspaceRole === "admin") {
+        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
       }
     }
     const handleConnect = () => {
-      console.log("[SOCKET] Connected:", socket.id, "workspace:", workspace.id, "role:", workspace.role)
+      console.log("[SOCKET] Connected:", socket.id, "workspace:", workspaceId, "role:", workspaceRole)
       refreshRealtimeData()
     }
     const handleTasksChanged = () => refreshRealtimeData()
     const handleMembersChanged = () => {
-      void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.members(workspace.id) })
-      if (workspace.role === "admin") {
-        void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.invitations(workspace.id) })
+      void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.members(workspaceId) })
+      if (workspaceRole === "admin") {
+        void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.invitations(workspaceId) })
       }
     }
     const handleTaskStatusChanged = (change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string }) => {
-      console.log("[SOCKET] Received task-status:changed:", change)
-      console.log("[QUERY] Invalidating task queries:", taskQueryKeys.list(workspace.id))
-      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspace.id) })
-      if (workspace.role === "admin") {
-        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspace.id) })
+      console.log(workspaceRole === "admin" ? "[ADMIN SOCKET] task_status_changed RECEIVED" : "[SOCKET] task_status_changed RECEIVED", change)
+      console.log("[QUERY] Invalidating tasks", taskQueryKeys.list(workspaceId))
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
+      if (workspaceRole === "admin") {
+        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
         message.info(`${change.taskTitle}: ${statusLabels[change.fromStatus] || change.fromStatus} → ${statusLabels[change.toStatus] || change.toStatus}`)
       }
     }
@@ -143,17 +146,17 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     socket.on("disconnect", handleDisconnect)
     socket.on("tasks:changed", handleTasksChanged)
     socket.on("workspace:members-changed", handleMembersChanged)
-    socket.on("task-status:changed", handleTaskStatusChanged)
+    socket.on("task_status_changed", handleTaskStatusChanged)
     return () => {
       socket.off("connect_error", handleConnectError)
       socket.off("connect", handleConnect)
       socket.off("disconnect", handleDisconnect)
       socket.off("tasks:changed", handleTasksChanged)
       socket.off("workspace:members-changed", handleMembersChanged)
-      socket.off("task-status:changed", handleTaskStatusChanged)
+      socket.off("task_status_changed", handleTaskStatusChanged)
       socket.disconnect()
     }
-  }, [queryClient, user, workspace?.id, workspace?.role, message])
+  }, [queryClient, userId, workspaceId, workspaceRole, message])
 
   const notifications = notificationsQuery.data ?? []
   const seenNotificationIds = new Set(seenNotificationState.workspaceId === workspace?.id ? seenNotificationState.ids : [])

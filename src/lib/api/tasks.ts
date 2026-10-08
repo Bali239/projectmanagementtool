@@ -43,6 +43,7 @@ export function updateTask(task: BoardTask) {
 }
 
 export function updateTaskStatus(taskId: string, status: TaskStatus) {
+  console.log("[TASK STATUS] Sending request", { taskId, status })
   return apiRequest<BoardTask>(`/tasks/${taskId}/status`, {
     method: "PATCH",
     data: { status },
