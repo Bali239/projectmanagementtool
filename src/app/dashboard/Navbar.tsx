@@ -103,6 +103,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     console.log("[SOCKET] Creating dashboard connection", { userId, workspaceId, role: workspaceRole })
     const socket = io(SOCKET_URL, {
       withCredentials: true,
+      transports: ["websocket"],
       // The session cookie belongs to the frontend domain and is not sent to
       // the separate Render domain. Fetch a short lived socket credential via
       // the same origin API each time Socket.IO connects or reconnects.
