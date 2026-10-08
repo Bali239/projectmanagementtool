@@ -1,7 +1,7 @@
 "use client"
 
 import { App, Avatar, Badge, Button, Drawer, Dropdown, Empty, Input, Popover, type MenuProps } from "antd"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { isCancelledError, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -136,10 +136,15 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     const handleManagerClose = (reason: string) => {
       console.warn("[SOCKET] Manager closed:", reason, { userId, workspaceId })
     }
+    const invalidateRealtimeQuery = (queryKey: readonly unknown[]) =>
+      queryClient.invalidateQueries({ queryKey }, { cancelRefetch: false, throwOnError: true })
+    const reportRefreshFailure = (error: unknown) => {
+      if (!isCancelledError(error)) console.error("[QUERY] Realtime refresh failed:", error)
+    }
     const refreshRealtimeData = () => {
-      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })
+      void invalidateRealtimeQuery(taskQueryKeys.list(workspaceId)).catch(reportRefreshFailure)
       if (workspaceRole === "admin") {
-        void queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) })
+        void invalidateRealtimeQuery(taskQueryKeys.statusNotifications(workspaceId)).catch(reportRefreshFailure)
       }
     }
     const handleConnect = () => {
@@ -149,28 +154,28 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     }
     const handleTasksChanged = () => refreshRealtimeData()
     const handleMembersChanged = () => {
-      void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.members(workspaceId) })
+      void invalidateRealtimeQuery(workspaceQueryKeys.members(workspaceId)).catch(reportRefreshFailure)
       if (workspaceRole === "admin") {
-        void queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.invitations(workspaceId) })
+        void invalidateRealtimeQuery(workspaceQueryKeys.invitations(workspaceId)).catch(reportRefreshFailure)
       }
     }
     const handleTaskStatusChanged = (
       change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string },
-      acknowledge?: (receipt: { socketId: string | undefined; role: string; boardRefreshed: boolean; notificationsRefreshed: boolean }) => void,
+      acknowledge?: (receipt: { socketId: string | undefined; boardRefreshed: boolean; notificationsRefreshed: boolean }) => void,
     ) => {
-      console.log(workspaceRole === "admin" ? "[ADMIN SOCKET] task_status_changed RECEIVED" : "[SOCKET] task_status_changed RECEIVED", change)
-      console.log("[QUERY] Invalidating tasks", taskQueryKeys.list(workspaceId))
-      const refreshes = [queryClient.invalidateQueries({ queryKey: taskQueryKeys.list(workspaceId) })]
-      if (workspaceRole === "admin") {
-        refreshes.push(queryClient.invalidateQueries({ queryKey: taskQueryKeys.statusNotifications(workspaceId) }))
-      }
+      if (workspaceRole !== "admin") return
+      console.log("[ADMIN SOCKET] task_status_changed RECEIVED", change)
+      const refreshes = [
+        invalidateRealtimeQuery(taskQueryKeys.list(workspaceId)),
+        invalidateRealtimeQuery(taskQueryKeys.statusNotifications(workspaceId)),
+      ]
       void Promise.allSettled(refreshes).then((results) => {
         const boardRefreshed = results[0]?.status === "fulfilled"
-        const notificationsRefreshed = workspaceRole !== "admin" || results[1]?.status === "fulfilled"
+        const notificationsRefreshed = results[1]?.status === "fulfilled"
         results.forEach((result) => {
-          if (result.status === "rejected") console.error("[QUERY] Refresh failed after socket event:", result.reason)
+          if (result.status === "rejected") reportRefreshFailure(result.reason)
         })
-        acknowledge?.({ socketId: socket.id, role: workspaceRole, boardRefreshed, notificationsRefreshed })
+        acknowledge?.({ socketId: socket.id, boardRefreshed, notificationsRefreshed })
       })
     }
     socket.on("connect_error", handleConnectError)
