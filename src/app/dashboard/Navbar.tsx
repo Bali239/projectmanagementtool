@@ -17,6 +17,11 @@ import { taskQueryKeys, workspaceQueryKeys } from "@/lib/queryKeys"
 import { API_BASE_URL } from "@/lib/api/client"
 import { io } from "socket.io-client"
 
+// Vercel's /api rewrite only proxies HTTP requests. Socket.IO needs a direct
+// URL to the long-running Express service, configured separately in production.
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
+  || (/^https?:\/\//i.test(API_BASE_URL) ? API_BASE_URL.replace(/\/api\/?$/, "") : null)
+
 const statusLabels: Record<string, string> = {
   todo: "To do",
   "in-progress": "In progress",
@@ -82,8 +87,8 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   }, [])
 
   useEffect(() => {
-    if (!user || !workspace) return
-    const socket = io(API_BASE_URL.replace(/\/api\/?$/, ""), {
+    if (!user || !workspace || !SOCKET_URL) return
+    const socket = io(SOCKET_URL, {
       withCredentials: true,
       auth: { workspaceId: workspace.id },
     })
