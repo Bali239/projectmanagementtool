@@ -1,7 +1,7 @@
 "use client"
 
 import { App, Avatar, Badge, Button, Drawer, Dropdown, Empty, Input, Popover, type MenuProps } from "antd"
-import { isCancelledError, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -14,33 +14,6 @@ import { authUserChanged } from "@/store/authSlice"
 import { setTaskSearchQuery } from "@/store/tasksSlice"
 import { fetchTaskStatusNotifications } from "@/lib/api/tasks"
 import { taskQueryKeys, workspaceQueryKeys } from "@/lib/queryKeys"
-import { API_BASE_URL, apiRequest } from "@/lib/api/client"
-import { io } from "socket.io-client"
-
-// Vercel's /api rewrite only proxies HTTP requests. Socket.IO needs a direct
-// URL to the long-running Express service, configured separately in production.
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
-  || (/^https?:\/\//i.test(API_BASE_URL) ? API_BASE_URL.replace(/\/api\/?$/, "") : null)
-
-function sanitizeSocketDiagnostic(value: unknown, depth = 0): unknown {
-  if (typeof value === "string") {
-    return value
-      .replace(/\b(bearer)\s+\S+/gi, "$1 [REDACTED]")
-      .replace(/\b(?:cookie|set-cookie|authorization)\s*:\s*[^\r\n]*/gi, "[REDACTED]")
-      .replace(/((?:access|refresh)?_?token|cookie|authorization|password|secret)(["']?\s*[:=]\s*["']?)[^&\s"',}]+/gi, "$1$2[REDACTED]")
-      .replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED]")
-  }
-  if (value === null || typeof value !== "object") return value
-  if (depth >= 4) return "[Truncated]"
-  if (Array.isArray(value)) return value.slice(0, 20).map((item) => sanitizeSocketDiagnostic(item, depth + 1))
-
-  return Object.fromEntries(
-    Object.entries(value)
-      .filter(([key]) => !/(?:auth|token|jwt|cookie|credential|secret|password|header)/i.test(key))
-      .slice(0, 20)
-      .map(([key, item]) => [key, sanitizeSocketDiagnostic(item, depth + 1)]),
-  )
-}
 
 const statusLabels: Record<string, string> = {
   todo: "To do",
@@ -69,9 +42,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
   const { user, workspace, workspaces, refreshWorkspaces, selectWorkspace } = useAuth()
-  const userId = user?.uid
   const workspaceId = workspace?.id
-  const workspaceRole = workspace?.role
   const notificationsKey = taskQueryKeys.statusNotifications(workspace?.id)
   const notificationsQuery = useQuery({
     queryKey: notificationsKey,
@@ -108,151 +79,6 @@ export default function Navbar({ sidebarOpen, onToggleSidebar, onCreateTask }: N
     breakpoint.addEventListener("change", syncViewport)
     return () => breakpoint.removeEventListener("change", syncViewport)
   }, [])
-
-  useEffect(() => {
-    if (!userId || !workspaceId || !workspaceRole) return
-    if (!SOCKET_URL) {
-      console.error("Socket.IO is not configured. Set NEXT_PUBLIC_SOCKET_URL to the Render service origin and redeploy the frontend.")
-      return
-    }
-    console.log("[SOCKET] Creating connection", { userId, workspaceId, workspaceRole })
-    const socket = io(SOCKET_URL, {
-      autoConnect: false,
-      withCredentials: true,
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
-      timeout: 20000,
-      // The session cookie belongs to the frontend domain and is not sent to
-      // the separate Render domain. Fetch a short lived socket credential via
-      // the same origin API each time Socket.IO connects or reconnects.
-      auth: (callback) => {
-        void apiRequest<{ token: string }>("/auth/socket-token")
-          .then(({ token }) => callback({ workspaceId, token }))
-          .catch((error: unknown) => {
-            console.error("Could not get a Socket.IO auth token:", error)
-            callback({ workspaceId, token: null })
-          })
-      },
-    })
-    let activeSocketId: string | undefined
-    const connectionDetails = (reason?: string) => ({
-      socketId: socket.id ?? activeSocketId,
-      userId,
-      workspaceId,
-      workspaceRole,
-      ...(reason ? { reason } : {}),
-    })
-    const handleConnectError = (error: Error & { description?: unknown; context?: unknown }) => {
-      console.error("[SOCKET] Connect error", {
-        ...connectionDetails(),
-        message: sanitizeSocketDiagnostic(error.message),
-        description: sanitizeSocketDiagnostic(error.description),
-        context: sanitizeSocketDiagnostic(error.context),
-      })
-    }
-    const handleDisconnect = (reason: string) => {
-      console.log("[SOCKET] Disconnect", connectionDetails(reason))
-    }
-    const handleReconnectAttempt = (attempt: number) => {
-      console.warn("[SOCKET] Reconnect attempt", { ...connectionDetails(), attempt })
-    }
-    const handleReconnectError = (error: Error) => {
-      console.error("[SOCKET] Reconnect error", {
-        ...connectionDetails(),
-        message: sanitizeSocketDiagnostic(error.message),
-      })
-    }
-    const handleReconnect = (attempt: number) => {
-      console.log("[SOCKET] Reconnected", { ...connectionDetails(), attempt })
-    }
-    const handleManagerOpen = () => {
-      console.log("[SOCKET] Manager opened", connectionDetails())
-    }
-    const handleManagerClose = (reason: string) => {
-      console.warn("[SOCKET] Manager closed", connectionDetails(reason))
-    }
-    const handleManagerError = (error: Error) => {
-      console.error("[SOCKET] Manager error", {
-        ...connectionDetails(),
-        message: sanitizeSocketDiagnostic(error.message),
-      })
-    }
-    const invalidateRealtimeQuery = (queryKey: readonly unknown[]) =>
-      queryClient.invalidateQueries({ queryKey }, { cancelRefetch: false, throwOnError: true })
-    const reportRefreshFailure = (error: unknown) => {
-      if (!isCancelledError(error)) console.error("[QUERY] Realtime refresh failed:", error)
-    }
-    const refreshRealtimeData = () => {
-      void invalidateRealtimeQuery(taskQueryKeys.list(workspaceId)).catch(reportRefreshFailure)
-      if (workspaceRole === "admin") {
-        void invalidateRealtimeQuery(taskQueryKeys.statusNotifications(workspaceId)).catch(reportRefreshFailure)
-      }
-    }
-    const handleConnect = () => {
-      activeSocketId = socket.id
-      console.log("[SOCKET] Connected", connectionDetails())
-      refreshRealtimeData()
-    }
-    const handleTasksChanged = () => refreshRealtimeData()
-    const handleMembersChanged = () => {
-      void invalidateRealtimeQuery(workspaceQueryKeys.members(workspaceId)).catch(reportRefreshFailure)
-      if (workspaceRole === "admin") {
-        void invalidateRealtimeQuery(workspaceQueryKeys.invitations(workspaceId)).catch(reportRefreshFailure)
-      }
-    }
-    const handleTaskStatusChanged = (
-      change: { taskId: string; taskTitle: string; fromStatus: string; toStatus: string },
-      acknowledge?: (receipt: { socketId: string | undefined; boardRefreshed: boolean; notificationsRefreshed: boolean }) => void,
-    ) => {
-      if (workspaceRole !== "admin") return
-      console.log("[ADMIN SOCKET] task_status_changed RECEIVED", change)
-      const refreshes = [
-        invalidateRealtimeQuery(taskQueryKeys.list(workspaceId)),
-        invalidateRealtimeQuery(taskQueryKeys.statusNotifications(workspaceId)),
-      ]
-      void Promise.allSettled(refreshes).then((results) => {
-        const boardRefreshed = results[0]?.status === "fulfilled"
-        const notificationsRefreshed = results[1]?.status === "fulfilled"
-        results.forEach((result) => {
-          if (result.status === "rejected") reportRefreshFailure(result.reason)
-        })
-        acknowledge?.({ socketId: socket.id, boardRefreshed, notificationsRefreshed })
-      })
-    }
-    socket.on("connect_error", handleConnectError)
-    socket.on("connect", handleConnect)
-    socket.on("disconnect", handleDisconnect)
-    socket.on("tasks:changed", handleTasksChanged)
-    socket.on("workspace:members-changed", handleMembersChanged)
-    socket.on("task_status_changed", handleTaskStatusChanged)
-    socket.io.on("reconnect_attempt", handleReconnectAttempt)
-    socket.io.on("reconnect_error", handleReconnectError)
-    socket.io.on("reconnect", handleReconnect)
-    socket.io.on("open", handleManagerOpen)
-    socket.io.on("close", handleManagerClose)
-    socket.io.on("error", handleManagerError)
-    socket.connect()
-
-    return () => {
-      console.log("[SOCKET] Effect cleanup", connectionDetails("React effect cleanup"))
-      socket.off("connect_error", handleConnectError)
-      socket.off("connect", handleConnect)
-      socket.off("disconnect", handleDisconnect)
-      socket.off("tasks:changed", handleTasksChanged)
-      socket.off("workspace:members-changed", handleMembersChanged)
-      socket.off("task_status_changed", handleTaskStatusChanged)
-      socket.io.off("reconnect_attempt", handleReconnectAttempt)
-      socket.io.off("reconnect_error", handleReconnectError)
-      socket.io.off("reconnect", handleReconnect)
-      socket.io.off("open", handleManagerOpen)
-      socket.io.off("close", handleManagerClose)
-      socket.io.off("error", handleManagerError)
-      socket.disconnect()
-    }
-  }, [queryClient, userId, workspaceId, workspaceRole])
 
   const notifications = notificationsQuery.data ?? []
   const seenNotificationIds = new Set(seenNotificationState.workspaceId === workspace?.id ? seenNotificationState.ids : [])
